@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speaking Card Box</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zilla+Slab:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B2A41;
+    --teal:#2A8F82;
+    --gold:#D79A3B;
+    --cream:#F7F3E9;
+    --card-line:#DCD4BE;
+    --card-margin:#C1544A;
+    --ink-light:#5B6B7A;
+    --paper:#FFFDF7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--cream);
+    font-family:'Inter',sans-serif;
+    color:var(--navy);
+    min-height:100vh;
+    padding:28px 16px 60px;
+  }
+  .wrap{max-width:760px;margin:0 auto;}
+
+  header.top{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    margin-bottom:22px;
+    border-bottom:3px solid var(--navy);
+    padding-bottom:12px;
+  }
+  header.top h1{
+    font-family:'Zilla Slab',serif;
+    font-weight:700;
+    font-size:1.9rem;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  header.top span{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.72rem;
+    color:var(--ink-light);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+
+  nav.tabs{
+    display:flex;
+    gap:6px;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+  }
+  nav.tabs button{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.75rem;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    background:var(--paper);
+    border:1.5px solid var(--card-line);
+    border-bottom:none;
+    color:var(--ink-light);
+    padding:9px 14px;
+    border-radius:6px 6px 0 0;
+    cursor:pointer;
+    position:relative;
+    top:1px;
+  }
+  nav.tabs button.active{
+    background:var(--navy);
+    color:var(--cream);
+    border-color:var(--navy);
+  }
+
+  .panel{
+    background:var(--paper);
+    border:1.5px solid var(--card-line);
+    border-radius:4px;
+    padding:26px;
+    position:relative;
+  }
+
+  /* index-card look for the drawn-card display */
+  .card-index{
+    background:
+      repeating-linear-gradient(var(--paper), var(--paper) 27px, var(--card-line) 28px, var(--paper) 29px);
+    border:1.5px solid var(--card-line);
+    border-left:4px solid var(--card-margin);
+    border-radius:2px;
+    padding:22px 24px 22px 30px;
+    min-height:220px;
+    position:relative;
+    box-shadow:3px 3px 0 rgba(27,42,65,0.06), 6px 6px 0 rgba(27,42,65,0.03);
+  }
+  .card-index .eyebrow{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.1em;
+    color:var(--teal);
+    margin-bottom:6px;
+  }
+  .card-index h2{
+    font-family:'Zilla Slab',serif;
+    font-size:1.5rem;
+    margin:0 0 16px;
+    line-height:1.3;
+  }
+  .tagrow{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .tag{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.78rem;
+    padding:5px 10px;
+    border-radius:14px;
+    border:1.3px solid currentColor;
+    white-space:nowrap;
+  }
+  .tag.pv{color:var(--teal);}
+  .tag.idiom{color:var(--gold);}
+  .tag.vocab{color:var(--navy);}
+  .group-label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-light);
+    margin:14px 0 6px;
+  }
+  .empty-hint{color:var(--ink-light);font-size:0.9rem;font-style:italic;}
+
+  .draw-btn{
+    font-family:'IBM Plex Mono',monospace;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    font-size:0.85rem;
+    background:var(--navy);
+    color:var(--cream);
+    border:none;
+    padding:12px 22px;
+    border-radius:5px;
+    cursor:pointer;
+    margin-top:18px;
+  }
+  .draw-btn:hover{background:#101c2e;}
+  .draw-btn.secondary{
+    background:transparent;
+    color:var(--navy);
+    border:1.5px solid var(--navy);
+  }
+
+  @keyframes pullCard{
+    0%{transform:translateY(-14px) rotate(-1.2deg);opacity:0;}
+    100%{transform:translateY(0) rotate(0deg);opacity:1;}
+  }
+  .card-index.fresh{animation:pullCard 0.28s ease-out;}
+
+  .taboo-target{
+    font-family:'Zilla Slab',serif;
+    font-weight:700;
+    font-size:2.1rem;
+    color:var(--navy);
+    margin:4px 0 18px;
+  }
+  .forbidden-list{list-style:none;padding:0;margin:0;}
+  .forbidden-list li{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.95rem;
+    color:var(--card-margin);
+    text-decoration:line-through;
+    padding:4px 0;
+  }
+
+  .ladder-steps{margin-top:16px;padding-left:0;list-style:none;}
+  .ladder-steps li{
+    font-family:'Inter',sans-serif;
+    font-size:0.92rem;
+    color:var(--ink-light);
+    padding:6px 0 6px 20px;
+    border-left:2px solid var(--card-line);
+    margin-left:6px;
+  }
+
+  p.hint{color:var(--ink-light);font-size:0.88rem;line-height:1.5;margin-top:4px;}
+
+  /* manage panel */
+  .manage-grid{display:grid;grid-template-columns:1fr;gap:22px;}
+  .manage-section h3{
+    font-family:'Zilla Slab',serif;
+    font-size:1.15rem;
+    margin:0 0 4px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .manage-section h3 .count{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.7rem;
+    color:var(--ink-light);
+    font-weight:400;
+  }
+  .chip-list{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 12px;}
+  .chip{
+    display:flex;align-items:center;gap:6px;
+    background:var(--cream);
+    border:1.2px solid var(--card-line);
+    border-radius:14px;
+    padding:5px 6px 5px 12px;
+    font-size:0.85rem;
+  }
+  .chip button{
+    background:none;border:none;color:var(--card-margin);
+    cursor:pointer;font-size:0.95rem;line-height:1;padding:2px 4px;
+  }
+  .add-row{display:flex;gap:8px;}
+  .add-row input{
+    flex:1;
+    font-family:'Inter',sans-serif;
+    font-size:0.9rem;
+    padding:8px 10px;
+    border:1.3px solid var(--card-line);
+    border-radius:5px;
+    background:var(--paper);
+  }
+  .add-row button{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.8rem;
+    background:var(--teal);
+    color:white;
+    border:none;
+    border-radius:5px;
+    padding:0 16px;
+    cursor:pointer;
+  }
+  .taboo-manage-item{
+    border:1.2px solid var(--card-line);
+    border-radius:6px;
+    padding:10px 12px;
+    margin-bottom:8px;
+    font-size:0.88rem;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+  .taboo-manage-item .fb{color:var(--ink-light);font-size:0.8rem;}
+  .taboo-manage-item button{
+    background:none;border:none;color:var(--card-margin);cursor:pointer;font-size:1rem;
+  }
+
+  footer.status{
+    text-align:center;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.7rem;
+    color:var(--ink-light);
+    margin-top:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <h1>Speaking Card Box</h1>
+    <span id="tabLabel">Story Cubes</span>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-tab="story" class="active">Story Cubes</button>
+    <button data-tab="debate">Debate Cards</button>
+    <button data-tab="taboo">Taboo+</button>
+    <button data-tab="ladder">Laddering</button>
+    <button data-tab="manage">Manage Lists</button>
+  </nav>
+
+  <div class="panel" id="panel"></div>
+
+  <footer class="status" id="status">loading your lists…</footer>
+</div>
+
+<script>
+const STORAGE_KEY = "speaking-toolkit-lists-v1";
+
+const DEFAULT_LISTS = {
+  themes: [
+    "You accidentally became famous.",
+    "You are trying to convince your friend to quit their job.",
+    "You discovered a hidden talent.",
+    "You got lost in a foreign city.",
+    "You witnessed something strange at work.",
+    "You have to give a toast at a wedding.",
+    "You're moving to a new country.",
+    "You found out a secret about a friend.",
+    "You have to cancel plans at the last minute.",
+    "You're starting a new hobby.",
+    "You had an embarrassing moment in public.",
+    "You're negotiating a raise.",
+    "You're meeting your partner's parents for the first time.",
+    "You're stuck in a long delay at the airport."
+  ],
+  phrasalVerbs: [
+    "turn down","run into","pull off","give up","put off","look forward to",
+    "come across","get along with","figure out","deal with","catch up on",
+    "break down","bring up","call off","carry on","come up with","cut back on",
+    "end up","fall behind","get away with","go over","hold on","keep up with",
+    "look into","make up for","point out","put up with","run out of","set up",
+    "sort out","stand out","take after","wear off","work out"
+  ],
+  idioms: [
+    "out of the blue","on the same page","hit the nail on the head","once in a blue moon",
+    "break the ice","cost an arm and a leg","under the weather","bite the bullet",
+    "spill the beans","the ball is in your court","back to square one","get cold feet",
+    "hit the sack","kill two birds with one stone","let the cat out of the bag",
+    "miss the boat","on thin ice","over the moon","piece of cake","pull yourself together",
+    "see eye to eye","sit on the fence","speak of the devil","the last straw","throw in the towel"
+  ],
+  vocabulary: [
+    "skeptical","inevitable","controversial","meticulous","ambiguous","resilient",
+    "pragmatic","candid","superficial","tedious","versatile","plausible","redundant",
+    "subtle","tentative","arbitrary","coherent","elusive","formidable","indispensable",
+    "intricate","notorious","obsolete","prevalent","profound","reluctant","tangible",
+    "unprecedented","viable","volatile"
+  ],
+  debateTopics: [
+    "AI should replace teachers.",
+    "People should never retire.",
+    "Everyone should own a garden.",
+    "Social media does more harm than good.",
+    "Money can buy happiness.",
+    "Cities should ban cars from downtown.",
+    "Everyone should learn a second language.",
+    "Working from home is better than working in an office.",
+    "Zoos should be abolished.",
+    "College education should be free."
+  ],
+  taboo: [
+    {target:"optimistic", forbidden:["hopeful","positive","future"]},
+    {target:"generous", forbidden:["giving","kind","share"]},
+    {target:"exhausted", forbidden:["tired","sleepy","energy"]},
+    {target:"frustrated", forbidden:["annoyed","angry","upset"]},
+    {target:"ambitious", forbidden:["goals","hardworking","driven"]},
+    {target:"reliable", forbidden:["dependable","trust","consistent"]},
+    {target:"awkward", forbidden:["weird","uncomfortable","strange"]},
+    {target:"curious", forbidden:["interested","questions","wonder"]},
+    {target:"stubborn", forbidden:["inflexible","opinion","change"]},
+    {target:"humble", forbidden:["modest","arrogant","proud"]},
+    {target:"nostalgic", forbidden:["memories","past","miss"]},
+    {target:"controversial", forbidden:["debate","disagree","opinion"]},
+    {target:"reckless", forbidden:["careless","dangerous","risk"]},
+    {target:"resourceful", forbidden:["clever","solve","creative"]},
+    {target:"blunt", forbidden:["honest","direct","rude"]}
+  ],
+  ladderStarters: [
+    "I met my boss.","I went to the store.","I saw a dog.","I ate breakfast.",
+    "I got a text.","I found a job.","I lost my keys.","I heard some news.",
+    "I made a mistake.","I had a meeting."
+  ]
+};
+
+let LISTS = null;
+let currentTab = "story";
+let currentDraw = {};
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+function sample(arr,n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
+function pickOne(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+async function loadLists(){
+  try{
+    const res = await window.storage.get(STORAGE_KEY, false);
+    LISTS = JSON.parse(res.value);
+    setStatus("lists loaded");
+  }catch(e){
+    LISTS = JSON.parse(JSON.stringify(DEFAULT_LISTS));
+    await saveLists();
+    setStatus("started with default lists");
+  }
+}
+async function saveLists(){
+  try{
+    await window.storage.set(STORAGE_KEY, JSON.stringify(LISTS), false);
+    setStatus("saved");
+  }catch(e){
+    setStatus("save failed — changes may not persist");
+  }
+}
+function setStatus(msg){
+  document.getElementById("status").textContent = msg;
+}
+
+const TAB_LABELS = {
+  story:"Story Cubes", debate:"Debate Cards", taboo:"Taboo+",
+  ladder:"Laddering", manage:"Manage Lists"
+};
+
+function renderTabs(){
+  document.querySelectorAll("#tabs button").forEach(btn=>{
+    btn.classList.toggle("active", btn.dataset.tab === currentTab);
+  });
+  document.getElementById("tabLabel").textContent = TAB_LABELS[currentTab];
+}
+
+function renderPanel(){
+  const panel = document.getElementById("panel");
+  if(currentTab === "story") panel.innerHTML = storyHTML();
+  else if(currentTab === "debate") panel.innerHTML = debateHTML();
+  else if(currentTab === "taboo") panel.innerHTML = tabooHTML();
+  else if(currentTab === "ladder") panel.innerHTML = ladderHTML();
+  else if(currentTab === "manage") panel.innerHTML = manageHTML();
+  attachPanelHandlers();
+}
+
+// ---------- STORY CUBES ----------
+function drawStory(){
+  currentDraw.story = {
+    theme: LISTS.themes.length ? pickOne(LISTS.themes) : null,
+    pv: sample(LISTS.phrasalVerbs, 3),
+    idioms: sample(LISTS.idioms, 2),
+    vocab: sample(LISTS.vocabulary, 3)
+  };
+}
+function storyHTML(){
+  if(!currentDraw.story) drawStory();
+  const d = currentDraw.story;
+  return `
+    <div class="card-index fresh">
+      <div class="eyebrow">Story Cubes — tell it, then tell it again</div>
+      <h2>${d.theme || "Add some themes in Manage Lists to get started."}</h2>
+      ${tagGroup("Phrasal verbs", d.pv, "pv")}
+      ${tagGroup("Idioms", d.idioms, "idiom")}
+      ${tagGroup("Vocabulary", d.vocab, "vocab")}
+    </div>
+    <p class="hint">She improvises a story on the theme, working in every expression. Interrupt with follow-up questions, then have her tell the whole story a second time — the second telling is where the fluency shows up.</p>
+    <button class="draw-btn" id="reroll">Draw new cubes</button>
+  `;
+}
+
+// ---------- DEBATE CARDS ----------
+function drawDebate(){
+  currentDraw.debate = {
+    topic: LISTS.debateTopics.length ? pickOne(LISTS.debateTopics) : null,
+    pv: sample(LISTS.phrasalVerbs, 4),
+    idioms: sample(LISTS.idioms, 3),
+    vocab: sample(LISTS.vocabulary, 5)
+  };
+}
+function debateHTML(){
+  if(!currentDraw.debate) drawDebate();
+  const d = currentDraw.debate;
+  return `
+    <div class="card-index fresh">
+      <div class="eyebrow">Debate Cards</div>
+      <h2>${d.topic || "Add debate topics in Manage Lists to get started."}</h2>
+      ${tagGroup("Must use — phrasal verbs", d.pv, "pv")}
+      ${tagGroup("Must use — idioms", d.idioms, "idiom")}
+      ${tagGroup("Must use — vocabulary", d.vocab, "vocab")}
+    </div>
+    <p class="hint">She argues one side (you can take the other, or play devil's advocate) and has to naturally land every required expression during the debate.</p>
+    <button class="draw-btn" id="reroll">Draw new card</button>
+  `;
+}
+
+// ---------- TABOO+ ----------
+function drawTaboo(){
+  currentDraw.taboo = LISTS.taboo.length ? pickOne(LISTS.taboo) : null;
+}
+function tabooHTML(){
+  if(!("taboo" in currentDraw)) drawTaboo();
+  const d = currentDraw.taboo;
+  if(!d){
+    return `<div class="card-index fresh"><div class="eyebrow">Taboo+</div><p class="empty-hint">Add taboo words in Manage Lists to get started.</p></div>
+    <button class="draw-btn" id="reroll">Draw new card</button>`;
+  }
+  return `
+    <div class="card-index fresh">
+      <div class="eyebrow">Taboo+ — explain it without these</div>
+      <div class="taboo-target">${d.target}</div>
+      <div class="group-label">Forbidden words</div>
+      <ul class="forbidden-list">
+        ${d.forbidden.map(w=>`<li>${w}</li>`).join("")}
+      </ul>
+    </div>
+    <p class="hint">She has to define or explain the target word out loud without using any of the forbidden words — great pressure-test for circumlocution and paraphrasing.</p>
+    <button class="draw-btn" id="reroll">Draw new card</button>
+  `;
+}
+
+// ---------- LADDERING ----------
+function drawLadder(){
+  currentDraw.ladder = {
+    starter: LISTS.ladderStarters.length ? pickOne(LISTS.ladderStarters) : "I met my boss.",
+    pv: LISTS.phrasalVerbs.length ? pickOne(LISTS.phrasalVerbs) : null,
+    idiom: LISTS.idioms.length ? pickOne(LISTS.idioms) : null,
+    vocab: LISTS.vocabulary.length ? pickOne(LISTS.vocabulary) : null
+  };
+}
+function ladderHTML(){
+  if(!currentDraw.ladder) drawLadder();
+  const d = currentDraw.ladder;
+  return `
+    <div class="card-index fresh">
+      <div class="eyebrow">Laddering — build the sentence up</div>
+      <h2>"${d.starter}"</h2>
+      <div class="group-label">Work these in, one rung at a time</div>
+      <ol class="ladder-steps">
+        <li>Add a detail (where, when, who).</li>
+        <li>Add a reaction or feeling.</li>
+        <li>Insert the phrasal verb: <strong>${d.pv || "—"}</strong></li>
+        <li>Insert the idiom: <strong>${d.idiom || "—"}</strong></li>
+        <li>Insert the vocabulary word: <strong>${d.vocab || "—"}</strong></li>
+      </ol>
+    </div>
+    <p class="hint">Start with the plain sentence and rebuild it out loud rung by rung, each time repeating the whole sentence with one more piece added.</p>
+    <button class="draw-btn" id="reroll">Draw new sentence</button>
+  `;
+}
+
+function tagGroup(label, items, cls){
+  if(!items || !items.length){
+    return `<div class="group-label">${label}</div><p class="empty-hint">not enough items in this list yet</p>`;
+  }
+  return `<div class="group-label">${label}</div><div class="tagrow">${items.map(w=>`<span class="tag ${cls}">${w}</span>`).join("")}</div>`;
+}
+
+// ---------- MANAGE LISTS ----------
+const SIMPLE_LISTS = [
+  {key:"themes", label:"Story themes"},
+  {key:"phrasalVerbs", label:"Phrasal verbs"},
+  {key:"idioms", label:"Idioms"},
+  {key:"vocabulary", label:"Vocabulary"},
+  {key:"debateTopics", label:"Debate topics"},
+  {key:"ladderStarters", label:"Laddering starter sentences"}
+];
+
+function manageHTML(){
+  let html = `<div class="manage-grid">`;
+  SIMPLE_LISTS.forEach(sec=>{
+    const items = LISTS[sec.key];
+    html += `
+      <div class="manage-section">
+        <h3>${sec.label} <span class="count">(${items.length})</span></h3>
+        <div class="chip-list">
+          ${items.map((it,i)=>`<span class="chip">${it}<button data-list="${sec.key}" data-idx="${i}" class="del-simple">×</button></span>`).join("") || `<span class="empty-hint">none yet</span>`}
+        </div>
+        <div class="add-row">
+          <input type="text" data-add="${sec.key}" placeholder="Add to ${sec.label.toLowerCase()}…">
+          <button data-addbtn="${sec.key}">Add</button>
+        </div>
+      </div>
+    `;
+  });
+
+  html += `
+    <div class="manage-section">
+      <h3>Taboo+ words <span class="count">(${LISTS.taboo.length})</span></h3>
+      ${LISTS.taboo.map((t,i)=>`
+        <div class="taboo-manage-item">
+          <div><strong>${t.target}</strong> — <span class="fb">${t.forbidden.join(", ")}</span></div>
+          <button data-del-taboo="${i}">×</button>
+        </div>
+      `).join("") || `<p class="empty-hint">none yet</p>`}
+      <div class="add-row" style="margin-top:8px;">
+        <input type="text" id="tabooTarget" placeholder="Target word (e.g. optimistic)">
+      </div>
+      <div class="add-row" style="margin-top:8px;">
+        <input type="text" id="tabooForbidden" placeholder="Forbidden words, comma-separated">
+        <button id="addTabooBtn">Add</button>
+      </div>
+    </div>
+  `;
+  html += `</div>`;
+  return html;
+}
+
+function attachPanelHandlers(){
+  const reroll = document.getElementById("reroll");
+  if(reroll){
+    reroll.addEventListener("click", ()=>{
+      if(currentTab==="story") drawStory();
+      if(currentTab==="debate") drawDebate();
+      if(currentTab==="taboo") drawTaboo();
+      if(currentTab==="ladder") drawLadder();
+      renderPanel();
+    });
+  }
+  if(currentTab === "manage"){
+    document.querySelectorAll(".del-simple").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const key = btn.dataset.list, idx = parseInt(btn.dataset.idx,10);
+        LISTS[key].splice(idx,1);
+        await saveLists();
+        renderPanel();
+      });
+    });
+    SIMPLE_LISTS.forEach(sec=>{
+      const btn = document.querySelector(`[data-addbtn="${sec.key}"]`);
+      const input = document.querySelector(`[data-add="${sec.key}"]`);
+      const submit = async ()=>{
+        const val = input.value.trim();
+        if(!val) return;
+        LISTS[sec.key].push(val);
+        input.value = "";
+        await saveLists();
+        renderPanel();
+      };
+      if(btn) btn.addEventListener("click", submit);
+      if(input) input.addEventListener("keydown", e=>{ if(e.key==="Enter") submit(); });
+    });
+    document.querySelectorAll("[data-del-taboo]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const idx = parseInt(btn.dataset.delTaboo,10);
+        LISTS.taboo.splice(idx,1);
+        await saveLists();
+        renderPanel();
+      });
+    });
+    const addTabooBtn = document.getElementById("addTabooBtn");
+    if(addTabooBtn){
+      addTabooBtn.addEventListener("click", async ()=>{
+        const target = document.getElementById("tabooTarget").value.trim();
+        const forbiddenRaw = document.getElementById("tabooForbidden").value.trim();
+        if(!target || !forbiddenRaw) return;
+        const forbidden = forbiddenRaw.split(",").map(s=>s.trim()).filter(Boolean);
+        LISTS.taboo.push({target, forbidden});
+        await saveLists();
+        renderPanel();
+      });
+    }
+  }
+}
+
+document.querySelectorAll("#tabs button").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    currentTab = btn.dataset.tab;
+    renderTabs();
+    renderPanel();
+  });
+});
+
+(async function init(){
+  await loadLists();
+  renderTabs();
+  renderPanel();
+})();
+</script>
+</body>
+</html>
