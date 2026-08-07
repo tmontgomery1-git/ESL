@@ -86,7 +86,6 @@
     position:relative;
   }
 
-  /* index-card look for the drawn-card display */
   .card-index{
     background:
       repeating-linear-gradient(var(--paper), var(--paper) 27px, var(--card-line) 28px, var(--paper) 29px);
@@ -120,7 +119,10 @@
     border-radius:14px;
     border:1.3px solid currentColor;
     white-space:nowrap;
+    cursor:pointer;
+    background:none;
   }
+  .tag:hover{background:rgba(27,42,65,0.06);}
   .tag.pv{color:var(--teal);}
   .tag.idiom{color:var(--gold);}
   .tag.vocab{color:var(--navy);}
@@ -148,11 +150,6 @@
     margin-top:18px;
   }
   .draw-btn:hover{background:#101c2e;}
-  .draw-btn.secondary{
-    background:transparent;
-    color:var(--navy);
-    border:1.5px solid var(--navy);
-  }
 
   @keyframes pullCard{
     0%{transform:translateY(-14px) rotate(-1.2deg);opacity:0;}
@@ -185,10 +182,10 @@
     border-left:2px solid var(--card-line);
     margin-left:6px;
   }
+  .ladder-steps li strong{color:var(--navy);cursor:pointer;text-decoration:underline dotted;}
 
   p.hint{color:var(--ink-light);font-size:0.88rem;line-height:1.5;margin-top:4px;}
 
-  /* manage panel */
   .manage-grid{display:grid;grid-template-columns:1fr;gap:22px;}
   .manage-section h3{
     font-family:'Zilla Slab',serif;
@@ -212,7 +209,9 @@
     border-radius:14px;
     padding:5px 6px 5px 12px;
     font-size:0.85rem;
+    cursor:pointer;
   }
+  .chip:hover{border-color:var(--navy);}
   .chip button{
     background:none;border:none;color:var(--card-margin);
     cursor:pointer;font-size:0.95rem;line-height:1;padding:2px 4px;
@@ -237,6 +236,18 @@
     padding:0 16px;
     cursor:pointer;
   }
+  .add-word-btn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.78rem;
+    background:none;
+    border:1.3px dashed var(--card-line);
+    color:var(--ink-light);
+    border-radius:6px;
+    padding:8px 12px;
+    cursor:pointer;
+    margin-top:2px;
+  }
+  .add-word-btn:hover{border-color:var(--navy);color:var(--navy);}
   .taboo-manage-item{
     border:1.2px solid var(--card-line);
     border-radius:6px;
@@ -259,6 +270,60 @@
     font-size:0.7rem;
     color:var(--ink-light);
     margin-top:16px;
+  }
+
+  /* modal */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(27,42,65,0.45);
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal-overlay.hidden{display:none;}
+  .modal-card{
+    max-width:480px;width:100%;
+    max-height:85vh;
+    overflow-y:auto;
+  }
+  .modal-close{
+    position:absolute;top:10px;right:14px;
+    background:none;border:none;font-size:1.3rem;
+    color:var(--ink-light);cursor:pointer;
+  }
+  .meaning-block{margin-bottom:14px;padding-bottom:12px;border-bottom:1px dashed var(--card-line);}
+  .meaning-block:last-of-type{border-bottom:none;}
+  .meaning-num{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem;color:var(--teal);text-transform:uppercase;letter-spacing:0.06em;
+  }
+  .meaning-def{font-size:0.98rem;margin:4px 0 6px;}
+  .meaning-ex{font-size:0.92rem;color:var(--ink-light);font-style:italic;}
+  .modal-actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+  .modal-actions button{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.78rem;
+    border-radius:5px;
+    padding:9px 14px;
+    cursor:pointer;
+    border:1.3px solid var(--navy);
+  }
+  .btn-primary{background:var(--navy);color:var(--cream);}
+  .btn-ghost{background:none;color:var(--navy);}
+  .btn-danger{background:none;color:var(--card-margin);border-color:var(--card-margin);}
+  .edit-field label{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;
+    color:var(--ink-light);display:block;margin-bottom:4px;
+  }
+  .edit-field input, .edit-field textarea{
+    width:100%;font-family:'Inter',sans-serif;font-size:0.92rem;
+    padding:7px 9px;border:1.3px solid var(--card-line);border-radius:5px;
+    margin-bottom:10px;background:var(--paper);resize:vertical;
+  }
+  .remove-meaning-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:0.7rem;
+    background:none;border:none;color:var(--card-margin);cursor:pointer;
   }
 </style>
 </head>
@@ -283,8 +348,14 @@
   <footer class="status" id="status">loading your lists…</footer>
 </div>
 
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal-card card-index" id="modalCard" style="position:relative;"></div>
+</div>
+
 <script>
-const STORAGE_KEY = "speaking-toolkit-lists-v1";
+const STORAGE_KEY = "speaking-toolkit-lists-v2";
+
+function w(text, meanings){ return {text, meanings}; }
 
 const DEFAULT_LISTS = {
   themes: [
@@ -304,27 +375,99 @@ const DEFAULT_LISTS = {
     "You're stuck in a long delay at the airport."
   ],
   phrasalVerbs: [
-    "turn down","run into","pull off","give up","put off","look forward to",
-    "come across","get along with","figure out","deal with","catch up on",
-    "break down","bring up","call off","carry on","come up with","cut back on",
-    "end up","fall behind","get away with","go over","hold on","keep up with",
-    "look into","make up for","point out","put up with","run out of","set up",
-    "sort out","stand out","take after","wear off","work out"
+    w("turn down",[{definition:"Reject an offer or request.",example:"She turned down the promotion because it meant relocating."},{definition:"Reduce the volume or level of something.",example:"Can you turn down the music? It's too loud."}]),
+    w("run into",[{definition:"Meet someone unexpectedly.",example:"I ran into my old professor at the airport."},{definition:"Encounter a problem or difficulty.",example:"We ran into some issues with the budget."}]),
+    w("pull off",[{definition:"Succeed at something difficult.",example:"Somehow they pulled off the deal at the last minute."},{definition:"Drive a vehicle to the side of the road.",example:"He pulled off the highway to check the map."}]),
+    w("give up",[{definition:"Stop trying to do something.",example:"Don't give up on your goals."},{definition:"Surrender or hand something over.",example:"She gave up her seat for the elderly man."}]),
+    w("put off",[{definition:"Postpone something.",example:"They put off the meeting until next week."}]),
+    w("look forward to",[{definition:"Feel excited about something that is going to happen.",example:"I'm looking forward to the weekend."}]),
+    w("come across",[{definition:"Find something by chance.",example:"I came across an old photo in the drawer."},{definition:"Give a certain impression.",example:"He came across as very confident in the interview."}]),
+    w("get along with",[{definition:"Have a friendly relationship with someone.",example:"She gets along with everyone at work."}]),
+    w("figure out",[{definition:"Understand or solve something.",example:"It took a while to figure out the instructions."}]),
+    w("deal with",[{definition:"Handle a problem or situation.",example:"He's dealing with a lot of stress lately."}]),
+    w("catch up on",[{definition:"Do something you fell behind on.",example:"I need to catch up on my sleep this weekend."}]),
+    w("break down",[{definition:"Stop functioning, usually a machine or vehicle.",example:"The car broke down on the highway."},{definition:"Become very upset, often crying.",example:"She broke down in tears during the meeting."}]),
+    w("bring up",[{definition:"Mention a topic in conversation.",example:"He brought up the issue during dinner."},{definition:"Raise a child.",example:"She was brought up by her grandparents."}]),
+    w("call off",[{definition:"Cancel something.",example:"They called off the wedding."}]),
+    w("carry on",[{definition:"Continue doing something.",example:"Please carry on with your work."}]),
+    w("come up with",[{definition:"Think of an idea or plan.",example:"She came up with a brilliant solution."}]),
+    w("cut back on",[{definition:"Reduce the amount of something.",example:"He's cutting back on sugar."}]),
+    w("end up",[{definition:"Eventually reach a situation or place, often unplanned.",example:"We ended up staying home instead."}]),
+    w("fall behind",[{definition:"Fail to keep up with a schedule or others.",example:"He fell behind on his rent payments."}]),
+    w("get away with",[{definition:"Do something wrong without being punished.",example:"She got away with being late every day."}]),
+    w("go over",[{definition:"Review something carefully.",example:"Let's go over the report before the meeting."}]),
+    w("hold on",[{definition:"Wait a moment.",example:"Hold on, I'll be right there."},{definition:"Grip something tightly.",example:"Hold on to the railing."}]),
+    w("keep up with",[{definition:"Stay at the same pace or level as someone or something.",example:"It's hard to keep up with the news these days."}]),
+    w("look into",[{definition:"Investigate something.",example:"The police are looking into the incident."}]),
+    w("make up for",[{definition:"Compensate for something.",example:"He bought flowers to make up for being late."}]),
+    w("point out",[{definition:"Indicate or mention something.",example:"She pointed out a mistake in the report."}]),
+    w("put up with",[{definition:"Tolerate something unpleasant.",example:"I don't know how she puts up with his complaints."}]),
+    w("run out of",[{definition:"Have no more of something left.",example:"We ran out of milk."}]),
+    w("set up",[{definition:"Arrange or prepare something.",example:"They set up the equipment before the show."},{definition:"Trick someone into a bad situation.",example:"He claimed he was set up by his coworker."}]),
+    w("sort out",[{definition:"Resolve or organize something.",example:"We need to sort out this confusion."}]),
+    w("stand out",[{definition:"Be noticeably better or different.",example:"Her resume really stands out."}]),
+    w("take after",[{definition:"Resemble a family member in appearance or character.",example:"She takes after her mother."}]),
+    w("wear off",[{definition:"Gradually disappear, usually an effect or feeling.",example:"The medicine's effect wore off after a few hours."}]),
+    w("work out",[{definition:"Exercise.",example:"He works out every morning."},{definition:"End successfully.",example:"I hope things work out for them."}])
   ],
   idioms: [
-    "out of the blue","on the same page","hit the nail on the head","once in a blue moon",
-    "break the ice","cost an arm and a leg","under the weather","bite the bullet",
-    "spill the beans","the ball is in your court","back to square one","get cold feet",
-    "hit the sack","kill two birds with one stone","let the cat out of the bag",
-    "miss the boat","on thin ice","over the moon","piece of cake","pull yourself together",
-    "see eye to eye","sit on the fence","speak of the devil","the last straw","throw in the towel"
+    w("out of the blue",[{definition:"Unexpectedly, without warning.",example:"He called me out of the blue after years of silence."}]),
+    w("on the same page",[{definition:"In agreement or having the same understanding.",example:"Let's make sure we're on the same page before the meeting."}]),
+    w("hit the nail on the head",[{definition:"Describe something exactly right.",example:"You hit the nail on the head with that observation."}]),
+    w("once in a blue moon",[{definition:"Very rarely.",example:"We only go out to eat once in a blue moon."}]),
+    w("break the ice",[{definition:"Ease tension in a new or awkward social situation.",example:"He told a joke to break the ice."}]),
+    w("cost an arm and a leg",[{definition:"Be very expensive.",example:"That car must have cost an arm and a leg."}]),
+    w("under the weather",[{definition:"Feeling slightly ill.",example:"I'm staying home today; I'm under the weather."}]),
+    w("bite the bullet",[{definition:"Do something difficult or unpleasant that can't be avoided.",example:"I finally bit the bullet and went to the dentist."}]),
+    w("spill the beans",[{definition:"Reveal a secret.",example:"Someone spilled the beans about the surprise party."}]),
+    w("the ball is in your court",[{definition:"It's your turn to act or decide.",example:"I've done my part — the ball is in your court now."}]),
+    w("back to square one",[{definition:"Starting over after a failed attempt.",example:"The plan fell through, so we're back to square one."}]),
+    w("get cold feet",[{definition:"Become nervous about doing something you had planned.",example:"She got cold feet right before the wedding."}]),
+    w("hit the sack",[{definition:"Go to bed.",example:"It's late — I'm going to hit the sack."}]),
+    w("kill two birds with one stone",[{definition:"Accomplish two things with a single action.",example:"I did my grocery shopping on the way to pick up the kids — killed two birds with one stone."}]),
+    w("let the cat out of the bag",[{definition:"Reveal a secret accidentally.",example:"He let the cat out of the bag about the promotion."}]),
+    w("miss the boat",[{definition:"Miss an opportunity.",example:"If you don't apply now, you'll miss the boat."}]),
+    w("on thin ice",[{definition:"In a risky or precarious situation.",example:"After being late again, he's on thin ice with his boss."}]),
+    w("over the moon",[{definition:"Extremely happy.",example:"She was over the moon about her exam results."}]),
+    w("piece of cake",[{definition:"Very easy.",example:"The test was a piece of cake."}]),
+    w("pull yourself together",[{definition:"Calm down and regain control of your emotions.",example:"Pull yourself together — we still have work to do."}]),
+    w("see eye to eye",[{definition:"Agree with someone.",example:"They finally saw eye to eye on the budget."}]),
+    w("sit on the fence",[{definition:"Avoid taking a side on an issue.",example:"He's been sitting on the fence about the decision for weeks."}]),
+    w("speak of the devil",[{definition:"Said when someone appears right after being mentioned.",example:"Speak of the devil — I was just talking about you!"}]),
+    w("the last straw",[{definition:"The final problem that makes someone lose patience.",example:"His constant lateness was the last straw."}]),
+    w("throw in the towel",[{definition:"Give up.",example:"After three failed attempts, she threw in the towel."}])
   ],
   vocabulary: [
-    "skeptical","inevitable","controversial","meticulous","ambiguous","resilient",
-    "pragmatic","candid","superficial","tedious","versatile","plausible","redundant",
-    "subtle","tentative","arbitrary","coherent","elusive","formidable","indispensable",
-    "intricate","notorious","obsolete","prevalent","profound","reluctant","tangible",
-    "unprecedented","viable","volatile"
+    w("skeptical",[{definition:"Doubting the truth or value of something.",example:"He was skeptical about the new diet plan."}]),
+    w("inevitable",[{definition:"Certain to happen, unavoidable.",example:"Change was inevitable in the fast-growing company."}]),
+    w("controversial",[{definition:"Causing public disagreement.",example:"The new policy was highly controversial."}]),
+    w("meticulous",[{definition:"Extremely careful and precise about details.",example:"She's meticulous about checking her work."}]),
+    w("ambiguous",[{definition:"Open to more than one interpretation.",example:"His answer was ambiguous, so we weren't sure what he meant."}]),
+    w("resilient",[{definition:"Able to recover quickly from difficulties.",example:"Children are often more resilient than we expect."}]),
+    w("pragmatic",[{definition:"Dealing with things practically rather than idealistically.",example:"We need a pragmatic solution, not a perfect one."}]),
+    w("candid",[{definition:"Openly and honestly truthful, even if blunt.",example:"She gave a candid opinion about the project."}]),
+    w("superficial",[{definition:"Only on the surface, not deep or thorough.",example:"His knowledge of the subject was superficial."}]),
+    w("tedious",[{definition:"Long, boring, and repetitive.",example:"Filling out the forms was a tedious task."}]),
+    w("versatile",[{definition:"Able to adapt to many different functions.",example:"This tool is versatile — it can be used for several tasks."},{definition:"Having many skills or abilities (of a person).",example:"She's a versatile actress who can play any role."}]),
+    w("plausible",[{definition:"Seeming reasonable or probable.",example:"His excuse sounded plausible."}]),
+    w("redundant",[{definition:"No longer needed, or unnecessarily repetitive.",example:"That sentence is redundant — you already said that."}]),
+    w("subtle",[{definition:"Not obvious, delicate or precise.",example:"There was a subtle change in her tone."}]),
+    w("tentative",[{definition:"Not certain or fixed, provisional.",example:"We made a tentative plan to meet next week."}]),
+    w("arbitrary",[{definition:"Based on random choice rather than reason.",example:"The rule felt completely arbitrary."}]),
+    w("coherent",[{definition:"Logical and consistent, easy to follow.",example:"He gave a coherent explanation of the events."}]),
+    w("elusive",[{definition:"Difficult to find, catch, or achieve.",example:"Success remained elusive despite their efforts."}]),
+    w("formidable",[{definition:"Inspiring fear or respect by being impressive or powerful.",example:"She's a formidable opponent in debate."}]),
+    w("indispensable",[{definition:"Absolutely necessary, impossible to do without.",example:"Her experience makes her indispensable to the team."}]),
+    w("intricate",[{definition:"Very detailed or complicated.",example:"The watch has an intricate mechanism."}]),
+    w("notorious",[{definition:"Famous for something bad.",example:"The area is notorious for traffic jams."}]),
+    w("obsolete",[{definition:"No longer used, outdated.",example:"That software is obsolete now."}]),
+    w("prevalent",[{definition:"Widespread, common at a particular time or place.",example:"The disease is prevalent in that region."}]),
+    w("profound",[{definition:"Very deep or intense.",example:"The book had a profound effect on me."}]),
+    w("reluctant",[{definition:"Unwilling or hesitant to do something.",example:"He was reluctant to admit his mistake."}]),
+    w("tangible",[{definition:"Able to be touched, or clearly real and definite.",example:"We need tangible proof, not just claims."}]),
+    w("unprecedented",[{definition:"Never done or known before.",example:"The storm caused unprecedented damage."}]),
+    w("viable",[{definition:"Capable of working successfully.",example:"Is this a viable business plan?"}]),
+    w("volatile",[{definition:"Likely to change suddenly and unpredictably.",example:"The stock market has been volatile lately."},{definition:"Evaporating easily at room temperature (chemistry).",example:"The volatile chemical had to be stored carefully."}])
   ],
   debateTopics: [
     "AI should replace teachers.",
@@ -365,6 +508,7 @@ const DEFAULT_LISTS = {
 let LISTS = null;
 let currentTab = "story";
 let currentDraw = {};
+let editState = null; // {listKey, index (or null for new), word, meanings}
 
 function shuffle(arr){
   const a = arr.slice();
@@ -422,7 +566,6 @@ function renderPanel(){
   attachPanelHandlers();
 }
 
-// ---------- STORY CUBES ----------
 function drawStory(){
   currentDraw.story = {
     theme: LISTS.themes.length ? pickOne(LISTS.themes) : null,
@@ -438,16 +581,15 @@ function storyHTML(){
     <div class="card-index fresh">
       <div class="eyebrow">Story Cubes — tell it, then tell it again</div>
       <h2>${d.theme || "Add some themes in Manage Lists to get started."}</h2>
-      ${tagGroup("Phrasal verbs", d.pv, "pv")}
-      ${tagGroup("Idioms", d.idioms, "idiom")}
-      ${tagGroup("Vocabulary", d.vocab, "vocab")}
+      ${tagGroup("Phrasal verbs", d.pv, "pv", "phrasalVerbs")}
+      ${tagGroup("Idioms", d.idioms, "idiom", "idioms")}
+      ${tagGroup("Vocabulary", d.vocab, "vocab", "vocabulary")}
     </div>
-    <p class="hint">She improvises a story on the theme, working in every expression. Interrupt with follow-up questions, then have her tell the whole story a second time — the second telling is where the fluency shows up.</p>
+    <p class="hint">She improvises a story on the theme, working in every expression. Tap any word to see its definition and an example. Interrupt with follow-up questions, then have her tell the whole story a second time.</p>
     <button class="draw-btn" id="reroll">Draw new cubes</button>
   `;
 }
 
-// ---------- DEBATE CARDS ----------
 function drawDebate(){
   currentDraw.debate = {
     topic: LISTS.debateTopics.length ? pickOne(LISTS.debateTopics) : null,
@@ -463,16 +605,15 @@ function debateHTML(){
     <div class="card-index fresh">
       <div class="eyebrow">Debate Cards</div>
       <h2>${d.topic || "Add debate topics in Manage Lists to get started."}</h2>
-      ${tagGroup("Must use — phrasal verbs", d.pv, "pv")}
-      ${tagGroup("Must use — idioms", d.idioms, "idiom")}
-      ${tagGroup("Must use — vocabulary", d.vocab, "vocab")}
+      ${tagGroup("Must use — phrasal verbs", d.pv, "pv", "phrasalVerbs")}
+      ${tagGroup("Must use — idioms", d.idioms, "idiom", "idioms")}
+      ${tagGroup("Must use — vocabulary", d.vocab, "vocab", "vocabulary")}
     </div>
-    <p class="hint">She argues one side (you can take the other, or play devil's advocate) and has to naturally land every required expression during the debate.</p>
+    <p class="hint">She argues one side and has to naturally land every required expression. Tap a word to check its meaning before she starts.</p>
     <button class="draw-btn" id="reroll">Draw new card</button>
   `;
 }
 
-// ---------- TABOO+ ----------
 function drawTaboo(){
   currentDraw.taboo = LISTS.taboo.length ? pickOne(LISTS.taboo) : null;
 }
@@ -489,15 +630,14 @@ function tabooHTML(){
       <div class="taboo-target">${d.target}</div>
       <div class="group-label">Forbidden words</div>
       <ul class="forbidden-list">
-        ${d.forbidden.map(w=>`<li>${w}</li>`).join("")}
+        ${d.forbidden.map(wd=>`<li>${wd}</li>`).join("")}
       </ul>
     </div>
-    <p class="hint">She has to define or explain the target word out loud without using any of the forbidden words — great pressure-test for circumlocution and paraphrasing.</p>
+    <p class="hint">She has to define or explain the target word out loud without using any of the forbidden words.</p>
     <button class="draw-btn" id="reroll">Draw new card</button>
   `;
 }
 
-// ---------- LADDERING ----------
 function drawLadder(){
   currentDraw.ladder = {
     starter: LISTS.ladderStarters.length ? pickOne(LISTS.ladderStarters) : "I met my boss.",
@@ -517,35 +657,53 @@ function ladderHTML(){
       <ol class="ladder-steps">
         <li>Add a detail (where, when, who).</li>
         <li>Add a reaction or feeling.</li>
-        <li>Insert the phrasal verb: <strong>${d.pv || "—"}</strong></li>
-        <li>Insert the idiom: <strong>${d.idiom || "—"}</strong></li>
-        <li>Insert the vocabulary word: <strong>${d.vocab || "—"}</strong></li>
+        <li>Insert the phrasal verb: ${d.pv ? `<strong data-list="phrasalVerbs" data-text="${escAttr(d.pv.text)}">${d.pv.text}</strong>` : "—"}</li>
+        <li>Insert the idiom: ${d.idiom ? `<strong data-list="idioms" data-text="${escAttr(d.idiom.text)}">${d.idiom.text}</strong>` : "—"}</li>
+        <li>Insert the vocabulary word: ${d.vocab ? `<strong data-list="vocabulary" data-text="${escAttr(d.vocab.text)}">${d.vocab.text}</strong>` : "—"}</li>
       </ol>
     </div>
-    <p class="hint">Start with the plain sentence and rebuild it out loud rung by rung, each time repeating the whole sentence with one more piece added.</p>
+    <p class="hint">Start with the plain sentence and rebuild it out loud rung by rung. Tap any bold word to check its meaning.</p>
     <button class="draw-btn" id="reroll">Draw new sentence</button>
   `;
 }
 
-function tagGroup(label, items, cls){
+function escAttr(s){ return String(s).replace(/"/g,"&quot;"); }
+
+function tagGroup(label, items, cls, listKey){
   if(!items || !items.length){
     return `<div class="group-label">${label}</div><p class="empty-hint">not enough items in this list yet</p>`;
   }
-  return `<div class="group-label">${label}</div><div class="tagrow">${items.map(w=>`<span class="tag ${cls}">${w}</span>`).join("")}</div>`;
+  return `<div class="group-label">${label}</div><div class="tagrow">${items.map(it=>`<button type="button" class="tag ${cls}" data-list="${listKey}" data-text="${escAttr(it.text)}">${it.text}</button>`).join("")}</div>`;
 }
 
-// ---------- MANAGE LISTS ----------
 const SIMPLE_LISTS = [
   {key:"themes", label:"Story themes"},
-  {key:"phrasalVerbs", label:"Phrasal verbs"},
-  {key:"idioms", label:"Idioms"},
-  {key:"vocabulary", label:"Vocabulary"},
   {key:"debateTopics", label:"Debate topics"},
   {key:"ladderStarters", label:"Laddering starter sentences"}
+];
+const WORD_LISTS = [
+  {key:"phrasalVerbs", label:"Phrasal verbs"},
+  {key:"idioms", label:"Idioms"},
+  {key:"vocabulary", label:"Vocabulary"}
 ];
 
 function manageHTML(){
   let html = `<div class="manage-grid">`;
+
+  WORD_LISTS.forEach(sec=>{
+    const items = LISTS[sec.key];
+    html += `
+      <div class="manage-section">
+        <h3>${sec.label} <span class="count">(${items.length})</span></h3>
+        <p class="hint" style="margin-top:0;">Tap a word to view or edit its definitions and examples.</p>
+        <div class="chip-list">
+          ${items.map((it,i)=>`<span class="chip" data-editlist="${sec.key}" data-editidx="${i}">${it.text}<button data-list="${sec.key}" data-idx="${i}" class="del-word">×</button></span>`).join("") || `<span class="empty-hint">none yet</span>`}
+        </div>
+        <button class="add-word-btn" data-newword="${sec.key}">+ Add a new ${sec.label.toLowerCase().replace(/s$/,'')}</button>
+      </div>
+    `;
+  });
+
   SIMPLE_LISTS.forEach(sec=>{
     const items = LISTS[sec.key];
     html += `
@@ -584,6 +742,127 @@ function manageHTML(){
   return html;
 }
 
+// ---------- MODAL: view mode ----------
+function openViewModal(listKey, text){
+  const item = LISTS[listKey].find(it=>it.text===text);
+  if(!item) return;
+  const overlay = document.getElementById("modalOverlay");
+  const card = document.getElementById("modalCard");
+  card.innerHTML = `
+    <button class="modal-close" id="modalCloseBtn">&times;</button>
+    <div class="eyebrow">${listKey === "phrasalVerbs" ? "Phrasal verb" : listKey === "idioms" ? "Idiom" : "Vocabulary"}</div>
+    <h2>${item.text}</h2>
+    ${item.meanings.map((m,i)=>`
+      <div class="meaning-block">
+        ${item.meanings.length>1 ? `<div class="meaning-num">Meaning ${i+1}</div>` : ``}
+        <div class="meaning-def">${m.definition}</div>
+        <div class="meaning-ex">"${m.example}"</div>
+      </div>
+    `).join("")}
+  `;
+  overlay.classList.remove("hidden");
+  document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+}
+
+// ---------- MODAL: edit mode ----------
+function openEditModal(listKey, index){
+  const isNew = index === null;
+  const source = isNew ? {text:"", meanings:[{definition:"",example:""}]} : LISTS[listKey][index];
+  editState = {listKey, index, text: source.text, meanings: source.meanings.map(m=>({...m}))};
+  renderEditModal();
+  document.getElementById("modalOverlay").classList.remove("hidden");
+}
+
+function renderEditModal(){
+  const card = document.getElementById("modalCard");
+  const label = editState.listKey === "phrasalVerbs" ? "phrasal verb" : editState.listKey === "idioms" ? "idiom" : "vocabulary word";
+  card.innerHTML = `
+    <button class="modal-close" id="modalCloseBtn">&times;</button>
+    <div class="eyebrow">${editState.index===null ? "Add" : "Edit"} ${label}</div>
+    <div class="edit-field">
+      <label>Word or phrase</label>
+      <input type="text" id="editWordText" value="${escAttr(editState.text)}">
+    </div>
+    <div id="meaningsContainer">
+      ${editState.meanings.map((m,i)=>`
+        <div class="meaning-block">
+          <div class="meaning-num">Meaning ${i+1} ${editState.meanings.length>1 ? `<button class="remove-meaning-btn" data-removemeaning="${i}">remove</button>` : ``}</div>
+          <div class="edit-field">
+            <label>Definition</label>
+            <textarea rows="2" data-meaningfield="definition" data-meaningidx="${i}">${m.definition}</textarea>
+            <label>Example sentence</label>
+            <input type="text" data-meaningfield="example" data-meaningidx="${i}" value="${escAttr(m.example)}">
+          </div>
+        </div>
+      `).join("")}
+    </div>
+    <button class="add-word-btn" id="addMeaningBtn">+ Add another meaning</button>
+    <div class="modal-actions">
+      <button class="btn-primary" id="saveEditBtn">Save</button>
+      <button class="btn-ghost" id="cancelEditBtn">Cancel</button>
+      ${editState.index!==null ? `<button class="btn-danger" id="deleteEditBtn">Delete word</button>` : ``}
+    </div>
+  `;
+  document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+  document.getElementById("cancelEditBtn").addEventListener("click", closeModal);
+  document.getElementById("editWordText").addEventListener("input", e=>{ editState.text = e.target.value; });
+  document.querySelectorAll("[data-meaningfield]").forEach(el=>{
+    el.addEventListener("input", e=>{
+      const idx = parseInt(e.target.dataset.meaningidx,10);
+      const field = e.target.dataset.meaningfield;
+      editState.meanings[idx][field] = e.target.value;
+    });
+  });
+  document.querySelectorAll("[data-removemeaning]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const idx = parseInt(btn.dataset.removemeaning,10);
+      editState.meanings.splice(idx,1);
+      renderEditModal();
+    });
+  });
+  document.getElementById("addMeaningBtn").addEventListener("click", ()=>{
+    editState.meanings.push({definition:"",example:""});
+    renderEditModal();
+  });
+  document.getElementById("saveEditBtn").addEventListener("click", async ()=>{
+    const cleanText = editState.text.trim();
+    const cleanMeanings = editState.meanings
+      .map(m=>({definition:m.definition.trim(), example:m.example.trim()}))
+      .filter(m=>m.definition || m.example);
+    if(!cleanText || !cleanMeanings.length){
+      setStatus("word and at least one definition are required");
+      return;
+    }
+    const newItem = {text:cleanText, meanings:cleanMeanings};
+    if(editState.index===null){
+      LISTS[editState.listKey].push(newItem);
+    }else{
+      LISTS[editState.listKey][editState.index] = newItem;
+    }
+    await saveLists();
+    closeModal();
+    renderPanel();
+  });
+  const delBtn = document.getElementById("deleteEditBtn");
+  if(delBtn){
+    delBtn.addEventListener("click", async ()=>{
+      LISTS[editState.listKey].splice(editState.index,1);
+      await saveLists();
+      closeModal();
+      renderPanel();
+    });
+  }
+}
+
+function closeModal(){
+  document.getElementById("modalOverlay").classList.add("hidden");
+  editState = null;
+}
+
+document.getElementById("modalOverlay").addEventListener("click", e=>{
+  if(e.target.id === "modalOverlay") closeModal();
+});
+
 function attachPanelHandlers(){
   const reroll = document.getElementById("reroll");
   if(reroll){
@@ -595,13 +874,40 @@ function attachPanelHandlers(){
       renderPanel();
     });
   }
+
+  document.querySelectorAll(".tag[data-list], strong[data-list]").forEach(el=>{
+    el.addEventListener("click", ()=>{
+      openViewModal(el.dataset.list, el.dataset.text);
+    });
+  });
+
   if(currentTab === "manage"){
     document.querySelectorAll(".del-simple").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
+      btn.addEventListener("click", async (e)=>{
+        e.stopPropagation();
         const key = btn.dataset.list, idx = parseInt(btn.dataset.idx,10);
         LISTS[key].splice(idx,1);
         await saveLists();
         renderPanel();
+      });
+    });
+    document.querySelectorAll(".del-word").forEach(btn=>{
+      btn.addEventListener("click", async (e)=>{
+        e.stopPropagation();
+        const key = btn.dataset.list, idx = parseInt(btn.dataset.idx,10);
+        LISTS[key].splice(idx,1);
+        await saveLists();
+        renderPanel();
+      });
+    });
+    document.querySelectorAll(".chip[data-editlist]").forEach(chip=>{
+      chip.addEventListener("click", ()=>{
+        openEditModal(chip.dataset.editlist, parseInt(chip.dataset.editidx,10));
+      });
+    });
+    document.querySelectorAll("[data-newword]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        openEditModal(btn.dataset.newword, null);
       });
     });
     SIMPLE_LISTS.forEach(sec=>{
