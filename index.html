@@ -585,7 +585,7 @@ function storyHTML(){
       ${tagGroup("Idioms", d.idioms, "idiom", "idioms")}
       ${tagGroup("Vocabulary", d.vocab, "vocab", "vocabulary")}
     </div>
-    <p class="hint">She improvises a story on the theme, working in every expression. Tap any word to see its definition and an example. Interrupt with follow-up questions, then have her tell the whole story a second time.</p>
+    <p class="hint">Improvise a story on the theme, working in every expression. Tap any word to see its definition and an example. Follow up with questions, then tell the whole story a second time — the second telling is where the fluency shows up.</p>
     <button class="draw-btn" id="reroll">Draw new cubes</button>
   `;
 }
@@ -609,7 +609,7 @@ function debateHTML(){
       ${tagGroup("Must use — idioms", d.idioms, "idiom", "idioms")}
       ${tagGroup("Must use — vocabulary", d.vocab, "vocab", "vocabulary")}
     </div>
-    <p class="hint">She argues one side and has to naturally land every required expression. Tap a word to check its meaning before she starts.</p>
+    <p class="hint">Argue one side (or play devil's advocate) and work every required expression in naturally. Tap a word to check its meaning before you start.</p>
     <button class="draw-btn" id="reroll">Draw new card</button>
   `;
 }
@@ -633,7 +633,7 @@ function tabooHTML(){
         ${d.forbidden.map(wd=>`<li>${wd}</li>`).join("")}
       </ul>
     </div>
-    <p class="hint">She has to define or explain the target word out loud without using any of the forbidden words.</p>
+    <p class="hint">Define or explain the target word out loud without using any of the forbidden words.</p>
     <button class="draw-btn" id="reroll">Draw new card</button>
   `;
 }
