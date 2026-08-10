@@ -325,6 +325,26 @@
     font-family:'IBM Plex Mono',monospace;font-size:0.7rem;
     background:none;border:none;color:var(--card-margin);cursor:pointer;
   }
+
+  .profile-bar{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    margin-bottom:16px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:0.78rem;
+  }
+  .profile-bar label{color:var(--ink-light);text-transform:uppercase;letter-spacing:0.06em;font-size:0.68rem;}
+  .profile-bar select{
+    font-family:'Inter',sans-serif;font-size:0.88rem;
+    padding:6px 8px;border:1.3px solid var(--card-line);border-radius:5px;
+    background:var(--paper);color:var(--navy);
+  }
+  .profile-bar button{
+    font-family:'IBM Plex Mono',monospace;font-size:0.7rem;
+    background:none;border:1.3px solid var(--card-line);color:var(--ink-light);
+    border-radius:5px;padding:6px 9px;cursor:pointer;
+  }
+  .profile-bar button:hover{border-color:var(--navy);color:var(--navy);}
+  .profile-bar .spacer{flex:1;}
 </style>
 </head>
 <body>
@@ -335,11 +355,24 @@
     <span id="tabLabel">Story Cubes</span>
   </header>
 
+  <div class="profile-bar" id="profileBar">
+    <label>Student</label>
+    <select id="profileSelect"></select>
+    <button id="newProfileBtn">+ New</button>
+    <button id="renameProfileBtn">Rename</button>
+    <button id="deleteProfileBtn">Delete</button>
+    <span class="spacer"></span>
+    <button id="exportProfileBtn">Export file</button>
+    <button id="importProfileBtn">Import file</button>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none">
+  </div>
+
   <nav class="tabs" id="tabs">
     <button data-tab="story" class="active">Story Cubes</button>
     <button data-tab="debate">Debate Cards</button>
     <button data-tab="taboo">Taboo+</button>
     <button data-tab="ladder">Laddering</button>
+    <button data-tab="warmup">Warmup Review</button>
     <button data-tab="manage">Manage Lists</button>
   </nav>
 
@@ -353,9 +386,11 @@
 </div>
 
 <script>
-const STORAGE_KEY = "speaking-toolkit-lists-v2";
+const PROFILE_INDEX_KEY = "esl-toolkit-profiles-v1";
+const LAST_PROFILE_KEY = "esl-toolkit-last-profile-v1";
+function dataKey(name){ return "esl-toolkit-data-v1::" + name; }
 
-function w(text, meanings){ return {text, meanings}; }
+function w(text, meanings, freqRank){ return {text, meanings, rating:null, freqRank: (typeof freqRank==="number"?freqRank:null)}; }
 
 const DEFAULT_LISTS = {
   themes: [
@@ -506,9 +541,12 @@ const DEFAULT_LISTS = {
 };
 
 let LISTS = null;
+let currentProfile = null;
 let currentTab = "story";
 let currentDraw = {};
 let editState = null; // {listKey, index (or null for new), word, meanings}
+let storageOK = true;
+let warmupState = null; // {listKey, queue:[...items], pos, batchSize, includeAll}
 
 function shuffle(arr){
   const a = arr.slice();
@@ -521,32 +559,190 @@ function shuffle(arr){
 function sample(arr,n){ return shuffle(arr).slice(0, Math.min(n, arr.length)); }
 function pickOne(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
-async function loadLists(){
+// Rated 3s show up most often, then 2s, then unrated (so new/unreviewed
+// items still surface); rated 1s ("already know this") are excluded from
+// drawn activities but still count for Warmup Review and Manage Lists.
+function weightForRating(rating){
+  if(rating === 3) return 6;
+  if(rating === 2) return 3;
+  if(rating === 1) return 0;
+  return 2; // unrated
+}
+function weightedSample(items, n){
+  const pool = [];
+  items.forEach(it=>{
+    const wt = weightForRating(it.rating);
+    for(let i=0;i<wt;i++) pool.push(it);
+  });
+  const chosen = [];
+  const used = new Set();
+  shuffle(pool).forEach(it=>{
+    if(chosen.length < n && !used.has(it.text)){
+      chosen.push(it);
+      used.add(it.text);
+    }
+  });
+  // If weighting excluded too many items to fill the draw (e.g. everything
+  // rated 1), top up from the rest so a draw is never emptier than it needs to be.
+  if(chosen.length < n){
+    shuffle(items.filter(it=>!used.has(it.text))).forEach(it=>{
+      if(chosen.length < n){ chosen.push(it); used.add(it.text); }
+    });
+  }
+  return chosen;
+}
+
+function getProfileIndex(){
   try{
-    const res = await window.storage.get(STORAGE_KEY, false);
-    LISTS = JSON.parse(res.value);
-    setStatus("lists loaded");
+    return JSON.parse(localStorage.getItem(PROFILE_INDEX_KEY)) || [];
+  }catch(e){ return []; }
+}
+function setProfileIndex(arr){
+  try{ localStorage.setItem(PROFILE_INDEX_KEY, JSON.stringify(arr)); }catch(e){ storageOK = false; }
+}
+
+async function loadLists(){
+  let idx = getProfileIndex();
+  if(idx.length === 0){
+    idx = ["Default"];
+    setProfileIndex(idx);
+    try{ localStorage.setItem(dataKey("Default"), JSON.stringify(DEFAULT_LISTS)); }catch(e){ storageOK = false; }
+  }
+  let last = null;
+  try{ last = localStorage.getItem(LAST_PROFILE_KEY); }catch(e){}
+  currentProfile = (last && idx.includes(last)) ? last : idx[0];
+  loadCurrentProfileLists();
+}
+
+function loadCurrentProfileLists(){
+  try{
+    const raw = localStorage.getItem(dataKey(currentProfile));
+    LISTS = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_LISTS));
   }catch(e){
     LISTS = JSON.parse(JSON.stringify(DEFAULT_LISTS));
-    await saveLists();
-    setStatus("started with default lists");
+    storageOK = false;
   }
+  setStatus(storageOK ? `"${currentProfile}" — saved on this computer/browser` : "storage unavailable — changes won't be saved, export a file to keep your work");
 }
+
 async function saveLists(){
   try{
-    await window.storage.set(STORAGE_KEY, JSON.stringify(LISTS), false);
-    setStatus("saved");
+    localStorage.setItem(dataKey(currentProfile), JSON.stringify(LISTS));
+    localStorage.setItem(LAST_PROFILE_KEY, currentProfile);
+    setStatus(`"${currentProfile}" — saved on this computer/browser`);
   }catch(e){
-    setStatus("save failed — changes may not persist");
+    storageOK = false;
+    setStatus("save failed — this browser is blocking local storage. Use Export file to save your work.");
   }
 }
 function setStatus(msg){
   document.getElementById("status").textContent = msg;
 }
 
+function renderProfileBar(){
+  const idx = getProfileIndex();
+  const select = document.getElementById("profileSelect");
+  select.innerHTML = idx.map(name=>`<option value="${escAttr(name)}" ${name===currentProfile?"selected":""}>${name}</option>`).join("");
+}
+
+async function switchProfile(name){
+  currentProfile = name;
+  loadCurrentProfileLists();
+  try{ localStorage.setItem(LAST_PROFILE_KEY, currentProfile); }catch(e){}
+  currentDraw = {};
+  renderProfileBar();
+  renderPanel();
+}
+
+async function createProfile(){
+  const name = prompt("New student's name (or any label for this list set):");
+  if(!name) return;
+  const clean = name.trim();
+  if(!clean) return;
+  const idx = getProfileIndex();
+  if(idx.includes(clean)){
+    alert("A profile with that name already exists.");
+    return;
+  }
+  idx.push(clean);
+  setProfileIndex(idx);
+  try{ localStorage.setItem(dataKey(clean), JSON.stringify(DEFAULT_LISTS)); }catch(e){}
+  await switchProfile(clean);
+}
+
+async function renameProfile(){
+  const name = prompt("New name for this profile:", currentProfile);
+  if(!name) return;
+  const clean = name.trim();
+  if(!clean || clean === currentProfile) return;
+  const idx = getProfileIndex();
+  if(idx.includes(clean)){
+    alert("A profile with that name already exists.");
+    return;
+  }
+  const data = localStorage.getItem(dataKey(currentProfile));
+  try{
+    localStorage.setItem(dataKey(clean), data);
+    localStorage.removeItem(dataKey(currentProfile));
+  }catch(e){}
+  const newIdx = idx.map(n => n===currentProfile ? clean : n);
+  setProfileIndex(newIdx);
+  await switchProfile(clean);
+}
+
+async function deleteProfile(){
+  const idx = getProfileIndex();
+  if(idx.length <= 1){
+    alert("You need at least one profile — create another before deleting this one.");
+    return;
+  }
+  if(!confirm(`Delete the profile "${currentProfile}" and its lists? This can't be undone.`)) return;
+  try{ localStorage.removeItem(dataKey(currentProfile)); }catch(e){}
+  const newIdx = idx.filter(n => n !== currentProfile);
+  setProfileIndex(newIdx);
+  await switchProfile(newIdx[0]);
+}
+
+function exportProfile(){
+  const payload = {profileName: currentProfile, lists: LISTS};
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${currentProfile.replace(/[^a-z0-9\-_]+/gi,"_")}-speaking-toolkit.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function importProfileFile(file){
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    let payload;
+    try{
+      payload = JSON.parse(e.target.result);
+    }catch(err){
+      alert("That doesn't look like a valid exported file.");
+      return;
+    }
+    const suggested = payload.profileName || file.name.replace(/\.json$/i,"");
+    const name = prompt("Save this as which profile name?", suggested);
+    if(!name) return;
+    const clean = name.trim();
+    if(!clean) return;
+    const idx = getProfileIndex();
+    if(idx.includes(clean) && !confirm(`"${clean}" already exists — overwrite it?`)) return;
+    if(!idx.includes(clean)){ idx.push(clean); setProfileIndex(idx); }
+    try{ localStorage.setItem(dataKey(clean), JSON.stringify(payload.lists || payload)); }catch(e){}
+    await switchProfile(clean);
+  };
+  reader.readAsText(file);
+}
+
 const TAB_LABELS = {
   story:"Story Cubes", debate:"Debate Cards", taboo:"Taboo+",
-  ladder:"Laddering", manage:"Manage Lists"
+  ladder:"Laddering", warmup:"Warmup Review", manage:"Manage Lists"
 };
 
 function renderTabs(){
@@ -562,6 +758,7 @@ function renderPanel(){
   else if(currentTab === "debate") panel.innerHTML = debateHTML();
   else if(currentTab === "taboo") panel.innerHTML = tabooHTML();
   else if(currentTab === "ladder") panel.innerHTML = ladderHTML();
+  else if(currentTab === "warmup") panel.innerHTML = warmupHTML();
   else if(currentTab === "manage") panel.innerHTML = manageHTML();
   attachPanelHandlers();
 }
@@ -569,8 +766,8 @@ function renderPanel(){
 function drawStory(){
   currentDraw.story = {
     theme: LISTS.themes.length ? pickOne(LISTS.themes) : null,
-    pv: sample(LISTS.phrasalVerbs, 3),
-    idioms: sample(LISTS.idioms, 2),
+    pv: weightedSample(LISTS.phrasalVerbs, 3),
+    idioms: weightedSample(LISTS.idioms, 2),
     vocab: sample(LISTS.vocabulary, 3)
   };
 }
@@ -593,8 +790,8 @@ function storyHTML(){
 function drawDebate(){
   currentDraw.debate = {
     topic: LISTS.debateTopics.length ? pickOne(LISTS.debateTopics) : null,
-    pv: sample(LISTS.phrasalVerbs, 4),
-    idioms: sample(LISTS.idioms, 3),
+    pv: weightedSample(LISTS.phrasalVerbs, 4),
+    idioms: weightedSample(LISTS.idioms, 3),
     vocab: sample(LISTS.vocabulary, 5)
   };
 }
@@ -641,8 +838,8 @@ function tabooHTML(){
 function drawLadder(){
   currentDraw.ladder = {
     starter: LISTS.ladderStarters.length ? pickOne(LISTS.ladderStarters) : "I met my boss.",
-    pv: LISTS.phrasalVerbs.length ? pickOne(LISTS.phrasalVerbs) : null,
-    idiom: LISTS.idioms.length ? pickOne(LISTS.idioms) : null,
+    pv: LISTS.phrasalVerbs.length ? weightedSample(LISTS.phrasalVerbs, 1)[0] : null,
+    idiom: LISTS.idioms.length ? weightedSample(LISTS.idioms, 1)[0] : null,
     vocab: LISTS.vocabulary.length ? pickOne(LISTS.vocabulary) : null
   };
 }
@@ -669,6 +866,83 @@ function ladderHTML(){
 
 function escAttr(s){ return String(s).replace(/"/g,"&quot;"); }
 
+// ---------- WARMUP REVIEW ----------
+const RATING_LABELS = {
+  1: "Already use this often — no need to review",
+  2: "Somewhat familiar",
+  3: "Really useful — good one to practice"
+};
+
+function buildWarmupQueue(listKey, batchSize, includeAll){
+  const all = LISTS[listKey];
+  let pool = includeAll ? all.slice() : all.filter(it=>!it.rating);
+  pool.sort((a,b)=>{
+    const ar = (typeof a.freqRank==="number") ? a.freqRank : Infinity;
+    const br = (typeof b.freqRank==="number") ? b.freqRank : Infinity;
+    return ar - br;
+  });
+  return pool.slice(0, batchSize);
+}
+
+function warmupHTML(){
+  const label = warmupState && warmupState.listKey === "idioms" ? "idioms" : "phrasal verbs";
+  if(!warmupState){
+    const pvUnrated = LISTS.phrasalVerbs.filter(it=>!it.rating).length;
+    const idUnrated = LISTS.idioms.filter(it=>!it.rating).length;
+    return `
+      <div class="card-index fresh">
+        <div class="eyebrow">Warmup Review</div>
+        <h2>Rate a batch before you start</h2>
+        <p class="hint" style="margin-top:0;">Step through a batch and rate each one. 1 = already fluent with it, no need to review. 3 = genuinely useful to get practice on. Ratings feed back into which words get drawn in Story Cubes, Debate Cards, and Laddering — 3s show up most, 1s get skipped.</p>
+        <div class="group-label">List</div>
+        <select id="warmupList">
+          <option value="phrasalVerbs">Phrasal verbs (${pvUnrated} unrated of ${LISTS.phrasalVerbs.length})</option>
+          <option value="idioms">Idioms (${idUnrated} unrated of ${LISTS.idioms.length})</option>
+        </select>
+        <div class="group-label">Batch size</div>
+        <input type="number" id="warmupBatchSize" value="15" min="1" max="100" style="width:80px;font-family:'Inter',sans-serif;font-size:0.92rem;padding:7px 9px;border:1.3px solid var(--card-line);border-radius:5px;">
+        <div style="margin-top:10px;">
+          <label style="font-size:0.85rem;color:var(--ink-light);"><input type="checkbox" id="warmupIncludeAll"> include already-rated items too (re-review)</label>
+        </div>
+      </div>
+      <button class="draw-btn" id="startWarmup">Start review</button>
+    `;
+  }
+
+  if(warmupState.pos >= warmupState.queue.length){
+    return `
+      <div class="card-index fresh">
+        <div class="eyebrow">Warmup Review — done</div>
+        <h2>Rated ${warmupState.pos} ${label} this round.</h2>
+        <p class="hint">Nice work. Run another batch now, or come back to it next session — another 10 or 20 at a time keeps this from feeling like a chore.</p>
+      </div>
+      <button class="draw-btn" id="warmupAnother">Review another batch</button>
+      <button class="draw-btn" id="warmupDone" style="background:none;color:var(--navy);border:1.5px solid var(--navy);">Done for now</button>
+    `;
+  }
+
+  const item = warmupState.queue[warmupState.pos];
+  return `
+    <div class="card-index fresh">
+      <div class="eyebrow">Warmup Review — ${warmupState.pos+1} of ${warmupState.queue.length}</div>
+      <h2>${item.text}</h2>
+      ${item.meanings.map((m,i)=>`
+        <div class="meaning-block">
+          ${item.meanings.length>1 ? `<div class="meaning-num">Meaning ${i+1}</div>` : ``}
+          <div class="meaning-def">${m.definition}</div>
+          <div class="meaning-ex">"${m.example}"</div>
+        </div>
+      `).join("") || `<p class="empty-hint">No definition on file yet — add one in Manage Lists.</p>`}
+    </div>
+    <div class="modal-actions" style="margin-top:16px;">
+      <button class="btn-danger" data-rate="1">1 — ${RATING_LABELS[1]}</button>
+      <button class="btn-ghost" data-rate="2">2 — ${RATING_LABELS[2]}</button>
+      <button class="btn-primary" data-rate="3">3 — ${RATING_LABELS[3]}</button>
+    </div>
+    <button class="draw-btn" id="warmupSkip" style="background:none;color:var(--ink-light);border:1.5px solid var(--card-line);margin-top:10px;">Skip, leave unrated</button>
+  `;
+}
+
 function tagGroup(label, items, cls, listKey){
   if(!items || !items.length){
     return `<div class="group-label">${label}</div><p class="empty-hint">not enough items in this list yet</p>`;
@@ -682,10 +956,16 @@ const SIMPLE_LISTS = [
   {key:"ladderStarters", label:"Laddering starter sentences"}
 ];
 const WORD_LISTS = [
-  {key:"phrasalVerbs", label:"Phrasal verbs"},
-  {key:"idioms", label:"Idioms"},
-  {key:"vocabulary", label:"Vocabulary"}
+  {key:"phrasalVerbs", label:"Phrasal verbs", ratable:true},
+  {key:"idioms", label:"Idioms", ratable:true},
+  {key:"vocabulary", label:"Vocabulary", ratable:false}
 ];
+
+function ratingBadge(rating){
+  if(!rating) return "";
+  const colorVar = rating===3 ? "var(--teal)" : rating===2 ? "var(--gold)" : "var(--card-margin)";
+  return ` <span style="color:${colorVar};font-family:'IBM Plex Mono',monospace;font-size:0.72rem;">★${rating}</span>`;
+}
 
 function manageHTML(){
   let html = `<div class="manage-grid">`;
@@ -695,11 +975,20 @@ function manageHTML(){
     html += `
       <div class="manage-section">
         <h3>${sec.label} <span class="count">(${items.length})</span></h3>
-        <p class="hint" style="margin-top:0;">Tap a word to view or edit its definitions and examples.</p>
+        <p class="hint" style="margin-top:0;">Tap a word to view or edit its definitions and examples.${sec.ratable ? " ★ shows this student's warmup rating." : ""}</p>
         <div class="chip-list">
-          ${items.map((it,i)=>`<span class="chip" data-editlist="${sec.key}" data-editidx="${i}">${it.text}<button data-list="${sec.key}" data-idx="${i}" class="del-word">×</button></span>`).join("") || `<span class="empty-hint">none yet</span>`}
+          ${items.map((it,i)=>`<span class="chip" data-editlist="${sec.key}" data-editidx="${i}">${it.text}${sec.ratable ? ratingBadge(it.rating) : ""}<button data-list="${sec.key}" data-idx="${i}" class="del-word">×</button></span>`).join("") || `<span class="empty-hint">none yet</span>`}
         </div>
-        <button class="add-word-btn" data-newword="${sec.key}">+ Add a new ${sec.label.toLowerCase().replace(/s$/,'')}</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="add-word-btn" data-newword="${sec.key}">+ Add a new ${sec.label.toLowerCase().replace(/s$/,'')}</button>
+          ${sec.ratable ? `<button class="add-word-btn" data-bulktoggle="${sec.key}">+ Bulk import list</button>` : ``}
+        </div>
+        ${sec.ratable ? `
+        <div class="bulk-box hidden" id="bulkbox-${sec.key}" style="margin-top:10px;">
+          <p class="hint" style="margin-top:0;">Paste one item per line, most frequent first. Either just the phrase, or <code>phrase | definition | example</code>. Rank is set by line order; existing entries with the same text are skipped.</p>
+          <textarea id="bulktext-${sec.key}" rows="6" style="width:100%;font-family:'IBM Plex Mono',monospace;font-size:0.82rem;padding:8px;border:1.3px solid var(--card-line);border-radius:5px;background:var(--paper);"></textarea>
+          <button class="draw-btn" data-bulksubmit="${sec.key}" style="margin-top:8px;">Import lines</button>
+        </div>` : ``}
       </div>
     `;
   });
@@ -833,7 +1122,13 @@ function renderEditModal(){
       setStatus("word and at least one definition are required");
       return;
     }
-    const newItem = {text:cleanText, meanings:cleanMeanings};
+    const existing = editState.index!==null ? LISTS[editState.listKey][editState.index] : null;
+    const newItem = {
+      text:cleanText,
+      meanings:cleanMeanings,
+      rating: existing ? (existing.rating || null) : null,
+      freqRank: existing ? (typeof existing.freqRank==="number" ? existing.freqRank : null) : null
+    };
     if(editState.index===null){
       LISTS[editState.listKey].push(newItem);
     }else{
@@ -944,6 +1239,72 @@ function attachPanelHandlers(){
         renderPanel();
       });
     }
+    document.querySelectorAll("[data-bulktoggle]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const box = document.getElementById(`bulkbox-${btn.dataset.bulktoggle}`);
+        if(box) box.classList.toggle("hidden");
+      });
+    });
+    document.querySelectorAll("[data-bulksubmit]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const key = btn.dataset.bulksubmit;
+        const textarea = document.getElementById(`bulktext-${key}`);
+        const result = bulkImportWords(key, textarea.value);
+        await saveLists();
+        setStatus(`added ${result.added}, skipped ${result.skipped} duplicate(s)`);
+        renderPanel();
+      });
+    });
+  }
+
+  if(currentTab === "warmup"){
+    const startBtn = document.getElementById("startWarmup");
+    if(startBtn){
+      startBtn.addEventListener("click", ()=>{
+        const listKey = document.getElementById("warmupList").value;
+        const batchSize = Math.max(1, parseInt(document.getElementById("warmupBatchSize").value,10) || 15);
+        const includeAll = document.getElementById("warmupIncludeAll").checked;
+        warmupState = {
+          listKey, batchSize, includeAll,
+          queue: buildWarmupQueue(listKey, batchSize, includeAll),
+          pos: 0
+        };
+        renderPanel();
+      });
+    }
+    document.querySelectorAll("[data-rate]").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const rating = parseInt(btn.dataset.rate,10);
+        const item = warmupState.queue[warmupState.pos];
+        const stored = LISTS[warmupState.listKey].find(it=>it.text===item.text);
+        if(stored) stored.rating = rating;
+        await saveLists();
+        warmupState.pos++;
+        renderPanel();
+      });
+    });
+    const skipBtn = document.getElementById("warmupSkip");
+    if(skipBtn){
+      skipBtn.addEventListener("click", ()=>{
+        warmupState.pos++;
+        renderPanel();
+      });
+    }
+    const anotherBtn = document.getElementById("warmupAnother");
+    if(anotherBtn){
+      anotherBtn.addEventListener("click", ()=>{
+        const {listKey, batchSize, includeAll} = warmupState;
+        warmupState = {listKey, batchSize, includeAll, queue: buildWarmupQueue(listKey, batchSize, includeAll), pos:0};
+        renderPanel();
+      });
+    }
+    const doneBtn = document.getElementById("warmupDone");
+    if(doneBtn){
+      doneBtn.addEventListener("click", ()=>{
+        warmupState = null;
+        renderPanel();
+      });
+    }
   }
 }
 
@@ -955,8 +1316,25 @@ document.querySelectorAll("#tabs button").forEach(btn=>{
   });
 });
 
+document.getElementById("profileSelect").addEventListener("change", (e)=>{
+  switchProfile(e.target.value);
+});
+document.getElementById("newProfileBtn").addEventListener("click", createProfile);
+document.getElementById("renameProfileBtn").addEventListener("click", renameProfile);
+document.getElementById("deleteProfileBtn").addEventListener("click", deleteProfile);
+document.getElementById("exportProfileBtn").addEventListener("click", exportProfile);
+document.getElementById("importProfileBtn").addEventListener("click", ()=>{
+  document.getElementById("importFileInput").click();
+});
+document.getElementById("importFileInput").addEventListener("change", (e)=>{
+  const file = e.target.files[0];
+  if(file) importProfileFile(file);
+  e.target.value = "";
+});
+
 (async function init(){
   await loadLists();
+  renderProfileBar();
   renderTabs();
   renderPanel();
 })();
