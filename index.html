@@ -282,6 +282,18 @@
     z-index:50;
   }
   .modal-overlay.hidden{display:none;}
+  .hidden{display:none;}
+  .defaults-banner{
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+    background:#FBF1DD;border:1.5px solid var(--gold);border-radius:6px;
+    padding:9px 14px;margin:0 0 14px;font-size:0.86rem;color:var(--navy);
+  }
+  .defaults-banner.hidden{display:none;margin:0;padding:0;border:none;}
+  .defaults-banner button{
+    border:1.3px solid var(--card-line);border-radius:5px;padding:5px 10px;
+    font-family:inherit;font-size:0.8rem;cursor:pointer;background:var(--paper);
+  }
+  .defaults-banner .btn-primary{background:var(--navy);color:var(--cream);border-color:var(--navy);}
   .modal-card{
     max-width:480px;width:100%;
     max-height:85vh;
@@ -346,6 +358,32 @@
   }
   .profile-bar button:hover{border-color:var(--navy);color:var(--navy);}
   .profile-bar .spacer{flex:1;}
+
+  /* print-set builder */
+  .print-set-list{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px;}
+  .print-set-item{
+    display:flex;align-items:center;gap:10px;
+    border:1.2px solid var(--card-line);border-radius:6px;
+    padding:9px 10px;background:var(--cream);
+  }
+  .print-set-item .set-num{
+    font-family:'IBM Plex Mono',monospace;font-size:.72rem;color:var(--ink-light);
+    min-width:24px;
+  }
+  .print-set-item .set-title{flex:1;font-weight:600;}
+  .print-set-item .set-type{
+    font-family:'IBM Plex Mono',monospace;font-size:.66rem;text-transform:uppercase;
+    color:var(--teal);letter-spacing:.05em;
+  }
+  .print-set-item button{
+    background:none;border:none;color:var(--card-margin);cursor:pointer;font-size:1rem;
+  }
+  .exercise-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+  .exercise-actions .draw-btn{margin-top:0;}
+  @media print{
+    body{background:white;padding:0;}
+    .wrap,.modal-overlay{display:none !important;}
+  }
 </style>
 </head>
 <body>
@@ -363,10 +401,13 @@
     <button id="renameProfileBtn">Rename</button>
     <button id="deleteProfileBtn">Delete</button>
     <span class="spacer"></span>
-    <button id="exportProfileBtn">Export file</button>
+    <button id="exportProfileBtn">Export student file</button>
     <button id="importProfileBtn">Import file</button>
+    <button id="printSetBtn">Print set (0)</button>
     <input type="file" id="importFileInput" accept="application/json" style="display:none">
   </div>
+
+  <div class="defaults-banner hidden" id="defaultsBanner"></div>
 
   <nav class="tabs" id="tabs">
     <button data-tab="story" class="active">Story Cubes</button>
@@ -411,40 +452,215 @@ const DEFAULT_LISTS = {
     "You're stuck in a long delay at the airport."
   ],
   phrasalVerbs: [
-    w("turn down",[{definition:"Reject an offer or request.",example:"She turned down the promotion because it meant relocating."},{definition:"Reduce the volume or level of something.",example:"Can you turn down the music? It's too loud."}]),
-    w("run into",[{definition:"Meet someone unexpectedly.",example:"I ran into my old professor at the airport."},{definition:"Encounter a problem or difficulty.",example:"We ran into some issues with the budget."}]),
-    w("pull off",[{definition:"Succeed at something difficult.",example:"Somehow they pulled off the deal at the last minute."},{definition:"Drive a vehicle to the side of the road.",example:"He pulled off the highway to check the map."}]),
-    w("give up",[{definition:"Stop trying to do something.",example:"Don't give up on your goals."},{definition:"Surrender or hand something over.",example:"She gave up her seat for the elderly man."}]),
-    w("put off",[{definition:"Postpone something.",example:"They put off the meeting until next week."}]),
-    w("look forward to",[{definition:"Feel excited about something that is going to happen.",example:"I'm looking forward to the weekend."}]),
-    w("come across",[{definition:"Find something by chance.",example:"I came across an old photo in the drawer."},{definition:"Give a certain impression.",example:"He came across as very confident in the interview."}]),
-    w("get along with",[{definition:"Have a friendly relationship with someone.",example:"She gets along with everyone at work."}]),
-    w("figure out",[{definition:"Understand or solve something.",example:"It took a while to figure out the instructions."}]),
-    w("deal with",[{definition:"Handle a problem or situation.",example:"He's dealing with a lot of stress lately."}]),
-    w("catch up on",[{definition:"Do something you fell behind on.",example:"I need to catch up on my sleep this weekend."}]),
-    w("break down",[{definition:"Stop functioning, usually a machine or vehicle.",example:"The car broke down on the highway."},{definition:"Become very upset, often crying.",example:"She broke down in tears during the meeting."}]),
-    w("bring up",[{definition:"Mention a topic in conversation.",example:"He brought up the issue during dinner."},{definition:"Raise a child.",example:"She was brought up by her grandparents."}]),
-    w("call off",[{definition:"Cancel something.",example:"They called off the wedding."}]),
-    w("carry on",[{definition:"Continue doing something.",example:"Please carry on with your work."}]),
-    w("come up with",[{definition:"Think of an idea or plan.",example:"She came up with a brilliant solution."}]),
-    w("cut back on",[{definition:"Reduce the amount of something.",example:"He's cutting back on sugar."}]),
-    w("end up",[{definition:"Eventually reach a situation or place, often unplanned.",example:"We ended up staying home instead."}]),
-    w("fall behind",[{definition:"Fail to keep up with a schedule or others.",example:"He fell behind on his rent payments."}]),
-    w("get away with",[{definition:"Do something wrong without being punished.",example:"She got away with being late every day."}]),
-    w("go over",[{definition:"Review something carefully.",example:"Let's go over the report before the meeting."}]),
-    w("hold on",[{definition:"Wait a moment.",example:"Hold on, I'll be right there."},{definition:"Grip something tightly.",example:"Hold on to the railing."}]),
-    w("keep up with",[{definition:"Stay at the same pace or level as someone or something.",example:"It's hard to keep up with the news these days."}]),
-    w("look into",[{definition:"Investigate something.",example:"The police are looking into the incident."}]),
-    w("make up for",[{definition:"Compensate for something.",example:"He bought flowers to make up for being late."}]),
-    w("point out",[{definition:"Indicate or mention something.",example:"She pointed out a mistake in the report."}]),
-    w("put up with",[{definition:"Tolerate something unpleasant.",example:"I don't know how she puts up with his complaints."}]),
-    w("run out of",[{definition:"Have no more of something left.",example:"We ran out of milk."}]),
-    w("set up",[{definition:"Arrange or prepare something.",example:"They set up the equipment before the show."},{definition:"Trick someone into a bad situation.",example:"He claimed he was set up by his coworker."}]),
-    w("sort out",[{definition:"Resolve or organize something.",example:"We need to sort out this confusion."}]),
-    w("stand out",[{definition:"Be noticeably better or different.",example:"Her resume really stands out."}]),
-    w("take after",[{definition:"Resemble a family member in appearance or character.",example:"She takes after her mother."}]),
-    w("wear off",[{definition:"Gradually disappear, usually an effect or feeling.",example:"The medicine's effect wore off after a few hours."}]),
-    w("work out",[{definition:"Exercise.",example:"He works out every morning."},{definition:"End successfully.",example:"I hope things work out for them."}])
+    w("get up", [{"definition": "Rise from bed", "example": "I get up at 6am every day."}]),
+    w("go on", [{"definition": "Continue doing or talking about something", "example": "Please go on with your story."}, {"definition": "Start or begin functioning", "example": "The lights suddenly went on."}]),
+    w("come back", [{"definition": "Return to a place or situation", "example": "She'll come back next week."}]),
+    w("find out", [{"definition": "Discover or learn information", "example": "Let me find out what happened."}]),
+    w("go back", [{"definition": "Return to a previous place or situation", "example": "We need to go back to the office."}]),
+    w("come on", [{"definition": "Used to encourage someone to hurry or act", "example": "Come on. We're going to be late."}, {"definition": "Start operating or functioning", "example": "The heater came on automatically."}]),
+    w("go out", [{"definition": "Leave home to socialize or spend time away from home", "example": "Do you want to go out tonight?"}, {"definition": "Stop burning or shining", "example": "The fire went out overnight."}]),
+    w("come out", [{"definition": "Become known or revealed", "example": "The truth finally came out."}, {"definition": "Be released or made available to the public", "example": "The new movie comes out Friday."}]),
+    w("go up", [{"definition": "Increase in amount, level, or price", "example": "Prices keep going up."}, {"definition": "Be built or constructed", "example": "A new building went up downtown."}]),
+    w("pick up", [{"definition": "Buy or collect something from a place", "example": "Can you pick up some milk?"}, {"definition": "Learn or acquire a skill or language informally", "example": "She picked up French quickly living there."}]),
+    w("go down", [{"definition": "Decrease in amount, level, or price", "example": "Sales went down last quarter."}, {"definition": "Sink or be destroyed underwater", "example": "The ship went down in the storm."}]),
+    w("sit down", [{"definition": "Move into a sitting position", "example": "Please sit down and relax."}]),
+    w("come up", [{"definition": "Happen unexpectedly or arise", "example": "Something came up at work."}, {"definition": "Be mentioned or raised in conversation", "example": "The topic came up in conversation."}]),
+    w("grow up", [{"definition": "Develop from a child into an adult", "example": "She grew up in Chicago."}]),
+    w("end up", [{"definition": "Eventually be in a particular situation or place", "example": "We ended up staying home."}]),
+    w("carry out", [{"definition": "Perform or complete a plan, task, or instruction", "example": "They carried out the plan."}]),
+    w("point out", [{"definition": "Draw attention to something", "example": "Let me point out one issue."}]),
+    w("set up", [{"definition": "Arrange or organize something so that it is ready", "example": "Can you set up the meeting?"}, {"definition": "Trick or frame someone by deliberately putting them in a compromising situation", "example": "He was set up by his own partner."}]),
+    w("look up", [{"definition": "Search for information in a reference source or online", "example": "I'll look it up online."}, {"definition": "Improve or become more successful / admire and respect someone (look up to)", "example": "Business is finally looking up. / She looks up to her mentor (look up to)."}]),
+    w("turn out", [{"definition": "Develop or prove to be a particular way", "example": "It turned out fine."}, {"definition": "Appear or attend an event in large numbers", "example": "A big crowd turned out for the event."}]),
+    w("work out", [{"definition": "Develop successfully or have a successful result", "example": "It worked out in the end."}, {"definition": "Exercise, especially at a gym", "example": "He works out at the gym every morning."}]),
+    w("take on", [{"definition": "Accept responsibility, work, or a task", "example": "He took on more responsibility."}, {"definition": "Hire or employ new workers", "example": "The company is taking on new staff."}]),
+    w("go through", [{"definition": "Read, examine, or experience something from beginning to end", "example": "I went through the report."}, {"definition": "Be successfully completed or approved", "example": "The deal finally went through."}]),
+    w("move on", [{"definition": "Stop focusing on something and continue to a new situation", "example": "It's time to move on."}]),
+    w("figure out", [{"definition": "Understand or find a solution to something", "example": "Let's figure out a solution."}]),
+    w("break down", [{"definition": "Stop working because of a mechanical or other failure", "example": "The car broke down on the highway."}, {"definition": "Become extremely upset and cry / analyze something by separating it into smaller parts", "example": "She broke down in tears. / Let's break down the costs."}]),
+    w("bring up", [{"definition": "Mention a topic or subject in conversation", "example": "She brought up an important point."}, {"definition": "Raise or care for a child until adulthood", "example": "He was brought up by his grandparents."}]),
+    w("call back", [{"definition": "Return someone's telephone call", "example": "I'll call you back later."}]),
+    w("check out", [{"definition": "Look at or examine something because it seems interesting", "example": "Let's check out that new restaurant."}, {"definition": "Leave a hotel after completing your stay", "example": "Please check out of the hotel by noon."}]),
+    w("clean up", [{"definition": "Make a place clean and orderly", "example": "We need to clean up the kitchen."}, {"definition": "Perform very successfully or win decisively", "example": "He cleaned up in the tournament (won big)."}]),
+    w("come in", [{"definition": "Enter a place", "example": "Please come in and sit down."}, {"definition": "Arrive or be received, such as results or information", "example": "The results are starting to come in."}]),
+    w("come along", [{"definition": "Accompany someone", "example": "Do you want to come along?"}, {"definition": "Progress or develop", "example": "Her recovery is coming along well."}]),
+    w("cut down", [{"definition": "Reduce the amount of something", "example": "I'm trying to cut down on sugar."}, {"definition": "Fell a tree by cutting through its trunk", "example": "They cut down the old tree."}]),
+    w("drop off", [{"definition": "Take someone or something to a place and leave them there", "example": "I'll drop off the package."}, {"definition": "Fall asleep", "example": "He dropped off to sleep on the couch."}]),
+    w("fall apart", [{"definition": "Break into pieces or stop holding together", "example": "The old chair fell apart."}, {"definition": "Collapse or fail as a relationship or organization", "example": "Their friendship fell apart after the move."}]),
+    w("fill out", [{"definition": "Complete a form by providing the requested information", "example": "Please fill out this form."}]),
+    w("get along", [{"definition": "Have a friendly relationship with someone", "example": "They get along really well."}]),
+    w("get away", [{"definition": "Leave a place, especially to take a break or escape", "example": "We need to get away for the weekend."}, {"definition": "Escape punishment for something wrong", "example": "He got away with the theft."}]),
+    w("get back", [{"definition": "Return to a place", "example": "When did you get back from the trip?"}, {"definition": "Return a response or contact someone later", "example": "I'll get back to you tomorrow."}]),
+    w("get by", [{"definition": "Manage to live or function with limited resources", "example": "We can get by on this budget."}]),
+    w("get over", [{"definition": "Recover from an illness or difficult experience", "example": "It took her a while to get over the flu."}, {"definition": "Recover emotionally from a breakup", "example": "He never got over the breakup."}]),
+    w("give up", [{"definition": "Stop trying or stop doing something", "example": "Don't give up now."}, {"definition": "Stop or abandon a habit or activity", "example": "She gave up smoking last year."}]),
+    w("go over", [{"definition": "Review or examine something carefully", "example": "Let's go over the notes together."}, {"definition": "Be received favorably", "example": "The speech went over well."}]),
+    w("hand in", [{"definition": "Give something to a person in authority, especially an assignment", "example": "Please hand in your homework."}]),
+    w("hang out", [{"definition": "Spend time relaxing or socializing", "example": "We hung out at the park."}]),
+    w("hold on", [{"definition": "Wait for a short time", "example": "Hold on a second."}, {"definition": "Remain attached or continue to withstand something", "example": "The rope held on despite the weight."}]),
+    w("keep up", [{"definition": "Continue at the same speed or level as someone or something", "example": "It's hard to keep up with the news."}]),
+    w("let down", [{"definition": "Disappoint someone by failing to meet their expectations", "example": "I don't want to let you down."}, {"definition": "Relax and behave less formally", "example": "She let her hair down for the party."}]),
+    w("look after", [{"definition": "Take care of someone or something", "example": "Can you look after the kids?"}]),
+    w("look for", [{"definition": "Try to find someone or something", "example": "I'm looking for my keys."}]),
+    w("look forward to", [{"definition": "Anticipate something with pleasure", "example": "I look forward to seeing you."}]),
+    w("make up", [{"definition": "Become friendly again after an argument", "example": "They made up after the fight."}, {"definition": "Invent something, such as an excuse / apply cosmetics", "example": "He made up an excuse. / She put on makeup."}]),
+    w("pass away", [{"definition": "Die", "example": "Her grandfather passed away last year."}]),
+    w("pick out", [{"definition": "Choose something from a group", "example": "Help me pick out a gift."}]),
+    w("put off", [{"definition": "Delay doing something", "example": "Don't put off the appointment."}, {"definition": "Make someone dislike or lose interest in something", "example": "The smell put me off my food."}]),
+    w("put up with", [{"definition": "Tolerate something unpleasant", "example": "I can't put up with this noise."}]),
+    w("run into", [{"definition": "Meet someone unexpectedly", "example": "I ran into an old friend."}, {"definition": "Encounter a problem unexpectedly", "example": "We ran into trouble halfway through."}]),
+    w("run out", [{"definition": "Use all of something so that none remains", "example": "We ran out of coffee."}, {"definition": "Have no time remaining", "example": "Time is running out."}]),
+    w("show up", [{"definition": "Arrive or appear, especially unexpectedly or later than expected", "example": "He showed up late again."}]),
+    w("slow down", [{"definition": "Reduce speed or make something happen more slowly", "example": "Please slow down while driving."}]),
+    w("take off", [{"definition": "Leave the ground and begin flying", "example": "The plane will take off soon."}, {"definition": "Remove clothing / become suddenly successful", "example": "He took off his jacket. / Her career really took off."}]),
+    w("take over", [{"definition": "Take control or responsibility from someone else", "example": "She took over the project."}]),
+    w("turn down", [{"definition": "Reject an offer or request", "example": "He turned down the offer."}, {"definition": "Reduce the volume or intensity", "example": "Please turn down the music."}]),
+    w("turn off", [{"definition": "Switch something from operating to not operating", "example": "Turn off the lights before you leave."}, {"definition": "Cause someone to lose interest or attraction", "example": "His rude comment turned me off."}]),
+    w("turn on", [{"definition": "Switch something from not operating to operating", "example": "Can you turn on the fan?"}, {"definition": "Attack someone suddenly or aggressively", "example": "The dog suddenly turned on its owner."}]),
+    w("turn up", [{"definition": "Arrive unexpectedly", "example": "He turned up unexpectedly."}, {"definition": "Increase the volume or intensity", "example": "Can you turn up the volume?"}]),
+    w("wake up", [{"definition": "Stop sleeping", "example": "I woke up early today."}]),
+    w("work on", [{"definition": "Spend time and effort improving or completing something", "example": "I'm working on a new project."}]),
+    w("bring back", [{"definition": "Cause someone to remember something", "example": "That song brings back memories."}]),
+    w("bring about", [{"definition": "Cause something to happen", "example": "The policy brought about real change."}]),
+    w("call off", [{"definition": "Cancel something that was planned", "example": "They called off the meeting."}]),
+    w("catch up", [{"definition": "Meet someone after a period apart and exchange news", "example": "Let's catch up over coffee."}, {"definition": "Reach the same level by making up for lost time, such as sleep", "example": "I need to catch up on sleep."}]),
+    w("check in", [{"definition": "Register your arrival at a hotel or other place where you are staying", "example": "We need to check in at the hotel."}, {"definition": "Report to or communicate with someone to give or get an update", "example": "She checks in with her team daily."}]),
+    w("come across", [{"definition": "Find or encounter something unexpectedly", "example": "I came across an old photo."}, {"definition": "Give a particular impression or appear in a particular way", "example": "He comes across as very confident."}]),
+    w("count on", [{"definition": "Rely on or depend on someone or something", "example": "You can count on me."}]),
+    w("deal with", [{"definition": "Handle or take action regarding something", "example": "I'll deal with it tomorrow."}]),
+    w("drop by", [{"definition": "Visit someone casually or without a formal appointment", "example": "Feel free to drop by anytime."}]),
+    w("fall behind", [{"definition": "Fail to keep up with a payment, task, or schedule", "example": "He fell behind on his rent."}]),
+    w("fall through", [{"definition": "Fail to happen or be completed as planned", "example": "The deal fell through."}]),
+    w("get through", [{"definition": "Successfully endure or survive a difficult situation", "example": "We got through the storm okay."}, {"definition": "Successfully make a telephone connection", "example": "I couldn't get through on the phone."}]),
+    w("give back", [{"definition": "Return something to the person who owns it", "example": "Please give back the book."}]),
+    w("go along with", [{"definition": "Agree to or accept an idea or plan", "example": "I'll go along with the plan."}]),
+    w("hold off", [{"definition": "Delay doing something", "example": "Let's hold off on deciding."}]),
+    w("hold up", [{"definition": "Delay or cause someone or something to be delayed", "example": "The traffic held us up."}, {"definition": "Remain convincing, valid, or able to withstand examination", "example": "Her story didn't hold up under questioning."}]),
+    w("keep on", [{"definition": "Continue doing something", "example": "She kept on working despite the noise."}]),
+    w("leave out", [{"definition": "Omit or fail to include something", "example": "Don't leave out any details."}]),
+    w("live up to", [{"definition": "Meet the expectations or standards associated with something", "example": "He lived up to expectations."}]),
+    w("look into", [{"definition": "Investigate or examine something", "example": "We'll look into the matter."}]),
+    w("look out for", [{"definition": "Watch for or be alert to something", "example": "Look out for icy roads."}]),
+    w("make out", [{"definition": "See, hear, or understand something with difficulty", "example": "I couldn't make out the writing."}, {"definition": "Turn out or perform in a particular way", "example": "How did the interview make out?"}]),
+    w("pass out", [{"definition": "Lose consciousness temporarily", "example": "She passed out from the heat."}, {"definition": "Distribute something to people", "example": "Volunteers passed out flyers downtown."}]),
+    w("pull off", [{"definition": "Succeed in doing something difficult or impressive", "example": "They pulled off a great win."}]),
+    w("put away", [{"definition": "Return something to its proper place, usually for storage", "example": "Put away your toys."}]),
+    w("put out", [{"definition": "Extinguish a fire", "example": "Firefighters put out the fire."}, {"definition": "Publish or issue something, such as a statement", "example": "The company put out a statement."}]),
+    w("run across", [{"definition": "Find or encounter something unexpectedly", "example": "I ran across an interesting article."}]),
+    w("settle down", [{"definition": "Begin living a calmer, more stable life", "example": "He wants to settle down soon."}, {"definition": "Become quiet or calm", "example": "Please settle down and be quiet."}]),
+    w("stand out", [{"definition": "Be noticeably different or more impressive than others", "example": "Her work really stands out."}]),
+    w("stick to", [{"definition": "Continue following or using something without changing", "example": "Stick to the plan."}]),
+    w("take after", [{"definition": "Resemble a family member in appearance or behavior", "example": "She takes after her mother."}]),
+    w("take up", [{"definition": "Begin a new activity or hobby", "example": "He took up painting last year."}, {"definition": "Occupy a particular amount of space or time", "example": "The sofa takes up too much space."}]),
+    w("think over", [{"definition": "Consider something carefully before deciding", "example": "Take some time to think it over."}]),
+    w("throw away", [{"definition": "Discard something as no longer wanted or useful", "example": "Don't throw away that receipt."}]),
+    w("try on", [{"definition": "Put on a piece of clothing to see whether it fits or looks right", "example": "Can I try on this jacket?"}]),
+    w("wear out", [{"definition": "Become damaged or unusable through continued use", "example": "The tires are starting to wear out."}, {"definition": "Exhaust someone through excessive effort or activity", "example": "She wore herself out from overworking."}]),
+    w("account for", [{"definition": "Make up or constitute a particular part of something", "example": "These costs account for most of the budget."}]),
+    w("act up", [{"definition": "Behave badly or fail to work properly", "example": "The printer is acting up again."}]),
+    w("back down", [{"definition": "Stop opposing someone because of pressure or difficulty", "example": "He refused to back down."}]),
+    w("back up", [{"definition": "Make a copy of computer files for safekeeping", "example": "Remember to back up your files."}, {"definition": "Accumulate into a traffic jam or slow the movement of traffic", "example": "Traffic is backing up on the highway."}]),
+    w("bank on", [{"definition": "Rely on something happening or someone doing something", "example": "Don't bank on getting a refund."}]),
+    w("bear with", [{"definition": "Be patient with someone or something temporarily", "example": "Please bear with me a moment."}]),
+    w("boil down to", [{"definition": "Have as the essential or most important point", "example": "It all boils down to trust."}]),
+    w("branch out", [{"definition": "Expand into a new area or activity", "example": "The company wants to branch out."}]),
+    w("brush up on", [{"definition": "Refresh or improve knowledge or skill that has become rusty", "example": "I need to brush up on my Spanish."}]),
+    w("burn out", [{"definition": "Become exhausted or unable to continue because of prolonged stress or overwork", "example": "She burned out after months of overtime."}]),
+    w("cave in", [{"definition": "Give in or stop resisting pressure", "example": "He finally caved in to the pressure."}, {"definition": "Collapse inward or fall down", "example": "The roof caved in during the storm."}]),
+    w("chip in", [{"definition": "Contribute money, help, or effort to something", "example": "Everyone chipped in for the gift."}]),
+    w("close down", [{"definition": "Stop operating permanently or for an extended period", "example": "The factory closed down last year."}]),
+    w("come down to", [{"definition": "Ultimately depend on or be determined by something", "example": "It comes down to timing."}]),
+    w("come up with", [{"definition": "Think of or produce an idea, plan, or solution", "example": "She came up with a great idea."}]),
+    w("cross out", [{"definition": "Draw a line through something to indicate that it should be removed or ignored", "example": "Cross out the wrong answer."}]),
+    w("dawn on", [{"definition": "Suddenly become understood or realized by someone", "example": "It finally dawned on me."}]),
+    w("dial down", [{"definition": "Reduce the intensity or amount of something", "example": "Let's dial down the tension."}]),
+    w("dig up", [{"definition": "Discover or uncover information, especially old or hidden information", "example": "Reporters dug up old records."}]),
+    w("dive into", [{"definition": "Begin doing or examining something with energy and enthusiasm", "example": "Let's dive into the details."}]),
+    w("doze off", [{"definition": "Fall lightly asleep, especially unintentionally", "example": "He dozed off during the meeting."}]),
+    w("draw up", [{"definition": "Prepare or write a formal document", "example": "The lawyer drew up the contract."}]),
+    w("dress up", [{"definition": "Wear more formal or special clothes than usual", "example": "We're dressing up for the party."}]),
+    w("ease off", [{"definition": "Become less intense, severe, or strong", "example": "The rain started to ease off."}]),
+    w("edge out", [{"definition": "Defeat or narrowly surpass someone or something", "example": "They edged out the competition."}]),
+    w("even out", [{"definition": "Become or make more equal, balanced, or consistent", "example": "Prices should even out over time."}]),
+    w("fall for", [{"definition": "Be deceived by something", "example": "He fell for the scam."}, {"definition": "Become romantically attracted to someone", "example": "She fell for him immediately."}]),
+    w("fall out", [{"definition": "Have an argument and stop being friendly with someone", "example": "The two friends fell out years ago."}]),
+    w("fend off", [{"definition": "Defend yourself against or prevent something unwanted", "example": "She fended off the criticism."}]),
+    w("fine tune", [{"definition": "Make small adjustments to improve something", "example": "We need to fine tune the schedule."}]),
+    w("flesh out", [{"definition": "Add details or information to make an idea or plan more complete", "example": "Let's flesh out this proposal."}]),
+    w("follow through", [{"definition": "Do what you said or intended to do until it is completed", "example": "Make sure to follow through on promises."}]),
+    w("follow up", [{"definition": "Take additional action after an earlier event or communication", "example": "I'll follow up next week."}]),
+    w("gear up", [{"definition": "Prepare for an event or activity", "example": "The team is gearing up for launch."}]),
+    w("get ahead", [{"definition": "Make progress or become more successful", "example": "He worked hard to get ahead."}]),
+    w("get at", [{"definition": "Mean or try to communicate something indirectly", "example": "What are you getting at?"}]),
+    w("get around to", [{"definition": "Finally find time to do something", "example": "I never got around to calling."}]),
+    w("give in", [{"definition": "Stop resisting and agree to something", "example": "She finally gave in to their demands."}]),
+    w("give off", [{"definition": "Produce and release a smell, heat, light, or other substance", "example": "The flowers give off a sweet smell."}]),
+    w("give out", [{"definition": "Stop functioning because a supply has been exhausted", "example": "The batteries gave out."}, {"definition": "Distribute something to people", "example": "Volunteers gave out water at the race."}]),
+    w("gloss over", [{"definition": "Avoid discussing or explaining something in detail, especially a problem", "example": "Don't gloss over the risks."}]),
+    w("hammer out", [{"definition": "Work through disagreements to reach an agreement", "example": "They hammered out an agreement."}]),
+    w("hang on", [{"definition": "Wait for a short time", "example": "Hang on. I'll be right there."}, {"definition": "Continue holding or maintain your grip despite difficulty", "example": "The climbers hung on despite the wind."}]),
+    w("hash out", [{"definition": "Discuss something thoroughly in order to reach an agreement or solution", "example": "Let's hash out the details later."}]),
+    w("hold back", [{"definition": "Restrain yourself from expressing or doing something", "example": "He held back his true feelings."}]),
+    w("hold out", [{"definition": "Continue resisting or surviving despite difficulty", "example": "The rebels held out for months."}]),
+    w("iron out", [{"definition": "Resolve small problems or differences", "example": "We ironed out the last issues."}]),
+    w("kick off", [{"definition": "Begin an event or activity", "example": "The event kicks off at noon."}]),
+    w("knuckle down", [{"definition": "Start working seriously and with concentration", "example": "It's time to knuckle down and study."}]),
+    w("lash out", [{"definition": "Suddenly attack or criticize someone angrily", "example": "He lashed out at his coworkers."}]),
+    w("lay off", [{"definition": "Dismiss workers from their jobs, usually because there is not enough work", "example": "The company laid off ten workers."}]),
+    w("lead up to", [{"definition": "Happen or develop during the period before an event", "example": "The weeks leading up to the exam were stressful."}]),
+    w("level off", [{"definition": "Stop rising or falling and become stable", "example": "Growth is starting to level off."}]),
+    w("line up", [{"definition": "Form a line or arrange something in an orderly sequence", "example": "We lined up early for tickets."}, {"definition": "Arrange or schedule people or events", "example": "She lined up three interviews for next week."}]),
+    w("live down", [{"definition": "Overcome the embarrassment or bad reputation caused by something", "example": "He'll never live down that mistake."}]),
+    w("look down on", [{"definition": "Consider someone inferior or less worthy", "example": "Try not to look down on others."}]),
+    w("look up to", [{"definition": "Admire and respect someone", "example": "She looks up to her older sister."}]),
+    w("make do", [{"definition": "Manage with what is available, even if it is not ideal", "example": "We'll have to make do with less."}]),
+    w("map out", [{"definition": "Plan something in detail", "example": "Let's map out our route."}]),
+    w("mull over", [{"definition": "Think carefully and for some time about something", "example": "He's mulling over the offer."}]),
+    w("narrow down", [{"definition": "Reduce a number of choices to a smaller group", "example": "Let's narrow down the choices."}]),
+    w("opt out", [{"definition": "Choose not to participate in something", "example": "You can opt out at any time."}]),
+    w("own up to", [{"definition": "Admit that you did something wrong", "example": "He owned up to the mistake."}]),
+    w("pan out", [{"definition": "Develop or end in a particular way, especially successfully", "example": "The plan didn't pan out."}]),
+    w("patch up", [{"definition": "Repair a relationship or settle a disagreement", "example": "They patched up their differences."}]),
+    w("pay off", [{"definition": "Produce a successful result", "example": "Hard work eventually pays off."}, {"definition": "Finish paying all the money owed on a debt", "example": "He paid off his loan early."}]),
+    w("phase out", [{"definition": "Gradually stop using, producing, or providing something", "example": "They're phasing out the old model."}]),
+    w("pipe down", [{"definition": "Become or make quieter", "example": "The teacher asked the class to pipe down."}]),
+    w("play down", [{"definition": "Make something seem less important, serious, or harmful than it really is", "example": "The company played down the risk."}]),
+    w("plow through", [{"definition": "Work through a large or difficult amount of something with determination", "example": "I plowed through the paperwork."}]),
+    w("pull through", [{"definition": "Survive a serious illness, injury, or difficult situation", "example": "The patient pulled through surgery."}]),
+    w("rack up", [{"definition": "Accumulate a large amount of something, especially debt or points", "example": "He racked up a lot of debt."}]),
+    w("rake in", [{"definition": "Earn or receive a large amount of money", "example": "The business is raking in profits."}]),
+    w("rein in", [{"definition": "Control or limit something that is becoming excessive", "example": "They need to rein in spending."}]),
+    w("root for", [{"definition": "Support or cheer for someone or a team", "example": "We're rooting for the home team."}]),
+    w("rope in", [{"definition": "Persuade or involve someone in an activity, often unexpectedly", "example": "They roped in a few volunteers."}]),
+    w("round up", [{"definition": "Gather people or things together", "example": "Police rounded up the suspects."}, {"definition": "Increase a number to the nearest convenient higher number", "example": "Let's round up the total to fifty."}]),
+    w("rule out", [{"definition": "Eliminate something as a possibility", "example": "We can't rule out that possibility."}]),
+    w("scale back", [{"definition": "Reduce the size, amount, or extent of something", "example": "They scaled back the project."}]),
+    w("scrape by", [{"definition": "Manage to survive or succeed with very little money or resources", "example": "We're scraping by on one income."}]),
+    w("shrug off", [{"definition": "Dismiss something as unimportant or fail to be bothered by it", "example": "He shrugged off the criticism."}]),
+    w("shy away from", [{"definition": "Avoid something because of fear, discomfort, or lack of confidence", "example": "She shies away from public speaking."}]),
+    w("size up", [{"definition": "Carefully assess or judge someone or something", "example": "He sized up the competition."}]),
+    w("smooth over", [{"definition": "Make a disagreement or difficult situation less serious or noticeable", "example": "She tried to smooth over the disagreement."}]),
+    w("spell out", [{"definition": "Explain something clearly and in detail", "example": "Let me spell out the terms."}]),
+    w("spring up", [{"definition": "Appear or develop suddenly", "example": "New shops sprang up downtown."}]),
+    w("square up", [{"definition": "Settle or balance an account", "example": "We need to square up the accounts."}]),
+    w("stem from", [{"definition": "Originate from or be caused by something", "example": "The problem stems from poor planning."}]),
+    w("step down", [{"definition": "Resign from an important position", "example": "The CEO stepped down last month."}]),
+    w("step up", [{"definition": "Increase effort or take greater responsibility when needed", "example": "The team stepped up in the final round."}]),
+    w("stick out", [{"definition": "Be noticeably prominent or different", "example": "His answer stuck out to the interviewer."}]),
+    w("stir up", [{"definition": "Cause trouble, conflict, or strong emotions", "example": "Don't stir up trouble."}]),
+    w("tally up", [{"definition": "Add together and calculate a total", "example": "Let's tally up the votes."}]),
+    w("tide over", [{"definition": "Help someone through a difficult period until circumstances improve", "example": "This should tide us over until payday."}]),
+    w("tone down", [{"definition": "Make something less strong, extreme, or offensive", "example": "Please tone down the language."}]),
+    w("top off", [{"definition": "Finish something by adding a final amount or item", "example": "Let's top off with dessert."}]),
+    w("touch on", [{"definition": "Mention or briefly discuss a subject", "example": "The article touches on several issues."}]),
+    w("tune out", [{"definition": "Stop paying attention or listening", "example": "I tend to tune out during long meetings."}]),
+    w("veer off", [{"definition": "Suddenly change direction away from the intended path", "example": "The car veered off the road."}]),
+    w("wade through", [{"definition": "Work through a large or difficult amount of something", "example": "I had to wade through a lot of paperwork."}]),
+    w("ward off", [{"definition": "Prevent or protect yourself from something harmful", "example": "Vitamin C may help ward off colds."}]),
+    w("wear off", [{"definition": "Gradually disappear or become less strong", "example": "The medicine's effect wore off."}]),
+    w("wind down", [{"definition": "Gradually relax or reduce activity before stopping", "example": "It's time to wind down for the night."}]),
+    w("write off", [{"definition": "Cancel or accept a debt as a loss", "example": "They wrote off the debt."}, {"definition": "Dismiss something as a failure or complete disaster", "example": "He wrote off the whole trip as a disaster."}]),
+    w("zero in on", [{"definition": "Focus closely on a particular person, thing, or issue", "example": "Let's zero in on the main issue."}])
   ],
   idioms: [
     w("out of the blue",[{definition:"Unexpectedly, without warning.",example:"He called me out of the blue after years of silence."}]),
@@ -541,13 +757,20 @@ const DEFAULT_LISTS = {
   ]
 };
 
+// Bump this whenever DEFAULT_LISTS above is edited (new items added/changed/removed).
+// Existing profiles will then see a "new defaults available" banner offering to
+// merge in the new items — nothing is ever overwritten automatically.
+const DEFAULT_LISTS_VERSION = 1;
+
 let LISTS = null;
 let currentProfile = null;
 let currentTab = "story";
 let currentDraw = {};
 let editState = null; // {listKey, index (or null for new), word, meanings}
 let storageOK = true;
+let defaultsOutdated = false;
 let warmupState = null; // {listKey, queue:[...items], pos, batchSize, includeAll}
+let printSet = []; // saved exercise snapshots waiting to be printed/exported
 
 function shuffle(arr){
   const a = arr.slice();
@@ -602,12 +825,28 @@ function setProfileIndex(arr){
   try{ localStorage.setItem(PROFILE_INDEX_KEY, JSON.stringify(arr)); }catch(e){ storageOK = false; }
 }
 
+// ---------- default-list version tracking ----------
+// Each profile remembers which DEFAULT_LISTS_VERSION it was last seeded/synced from.
+// A profile created before this system existed has no stored version, which is
+// treated as version 0 — i.e. "out of date" — so the banner offers a one-time review.
+function defaultVersionKey(name){ return "esl-toolkit-default-version-v1::" + name; }
+function getStoredDefaultVersion(name){
+  try{
+    const v = localStorage.getItem(defaultVersionKey(name));
+    return v === null ? 0 : (parseInt(v,10) || 0);
+  }catch(e){ return DEFAULT_LISTS_VERSION; } // storage broken: don't nag, just assume current
+}
+function setStoredDefaultVersion(name, version){
+  try{ localStorage.setItem(defaultVersionKey(name), String(version)); }catch(e){}
+}
+
 async function loadLists(){
   let idx = getProfileIndex();
   if(idx.length === 0){
     idx = ["Default"];
     setProfileIndex(idx);
     try{ localStorage.setItem(dataKey("Default"), JSON.stringify(DEFAULT_LISTS)); }catch(e){ storageOK = false; }
+    setStoredDefaultVersion("Default", DEFAULT_LISTS_VERSION);
   }
   let last = null;
   try{ last = localStorage.getItem(LAST_PROFILE_KEY); }catch(e){}
@@ -624,6 +863,129 @@ function loadCurrentProfileLists(){
     storageOK = false;
   }
   setStatus(storageOK ? `"${currentProfile}" — saved on this computer/browser` : "storage unavailable — changes won't be saved, export a file to keep your work");
+  checkDefaultVersion();
+}
+
+function checkDefaultVersion(){
+  defaultsOutdated = storageOK && getStoredDefaultVersion(currentProfile) < DEFAULT_LISTS_VERSION;
+  renderDefaultsBanner();
+}
+
+function renderDefaultsBanner(){
+  const el = document.getElementById("defaultsBanner");
+  if(!el) return;
+  if(!defaultsOutdated){
+    el.classList.add("hidden");
+    el.innerHTML = "";
+    return;
+  }
+  el.classList.remove("hidden");
+  el.innerHTML = `
+    <span>The shipped default lists have changed since "${escAttr(currentProfile)}" was created.</span>
+    <button id="reviewDefaultsBtn" class="btn-primary">Review new items</button>
+    <button id="dismissDefaultsBtn" class="btn-ghost">Dismiss</button>
+  `;
+  document.getElementById("reviewDefaultsBtn").addEventListener("click", openDefaultsReviewModal);
+  document.getElementById("dismissDefaultsBtn").addEventListener("click", ()=>{
+    setStoredDefaultVersion(currentProfile, DEFAULT_LISTS_VERSION);
+    defaultsOutdated = false;
+    renderDefaultsBanner();
+  });
+}
+
+// Items present in the current DEFAULT_LISTS but not (by text/target match) in this
+// profile's LISTS — i.e. candidates to offer in the review modal. Matching is by
+// name only, so an item the student has since edited or re-rated still counts as
+// "already have it" and won't be re-offered or touched.
+function defaultsDiff(){
+  const diff = {};
+  WORD_LISTS.forEach(sec=>{
+    const existing = new Set(LISTS[sec.key].map(it=>it.text));
+    diff[sec.key] = DEFAULT_LISTS[sec.key].filter(it=>!existing.has(it.text));
+  });
+  SIMPLE_LISTS.forEach(sec=>{
+    const existing = new Set(LISTS[sec.key]);
+    diff[sec.key] = DEFAULT_LISTS[sec.key].filter(t=>!existing.has(t));
+  });
+  const existingTaboo = new Set(LISTS.taboo.map(t=>t.target));
+  diff.taboo = DEFAULT_LISTS.taboo.filter(t=>!existingTaboo.has(t.target));
+  return diff;
+}
+
+function openDefaultsReviewModal(){
+  const diff = defaultsDiff();
+  const allSections = [...WORD_LISTS, ...SIMPLE_LISTS, {key:"taboo", label:"Taboo+ words"}];
+  const sectionsWithNew = allSections.filter(sec => diff[sec.key] && diff[sec.key].length);
+  const overlay = document.getElementById("modalOverlay");
+  const card = document.getElementById("modalCard");
+
+  if(!sectionsWithNew.length){
+    card.innerHTML = `
+      <button class="modal-close" id="modalCloseBtn">&times;</button>
+      <div class="eyebrow">Shipped defaults</div>
+      <h2>Nothing new to add</h2>
+      <p class="hint">Every item currently in the shipped default lists is already in "${escAttr(currentProfile)}". Marking this profile as up to date.</p>
+      <div class="modal-actions">
+        <button class="btn-primary" id="closeReviewBtn">Done</button>
+      </div>
+    `;
+    overlay.classList.remove("hidden");
+    document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+    document.getElementById("closeReviewBtn").addEventListener("click", ()=>{
+      setStoredDefaultVersion(currentProfile, DEFAULT_LISTS_VERSION);
+      defaultsOutdated = false;
+      renderDefaultsBanner();
+      closeModal();
+    });
+    return;
+  }
+
+  card.innerHTML = `
+    <button class="modal-close" id="modalCloseBtn">&times;</button>
+    <div class="eyebrow">Shipped defaults updated</div>
+    <h2>New items available</h2>
+    <p class="hint">These are in the current shipped default lists but not yet in "${escAttr(currentProfile)}". Check the ones you want to add — nothing is changed until you click "Add checked items". Anything you don't add stays untouched, and you can review again later.</p>
+    ${sectionsWithNew.map(sec=>`
+      <div class="manage-section">
+        <h3>${sec.label} <span class="count">(${diff[sec.key].length} new)</span></h3>
+        <div class="chip-list">
+          ${diff[sec.key].map((it,i)=>{
+            const label = sec.key==="taboo" ? it.target : (typeof it==="string" ? it : it.text);
+            return `<label class="chip"><input type="checkbox" data-diffkey="${sec.key}" data-diffidx="${i}" checked style="margin:0 2px 0 0;">${escAttr(label)}</label>`;
+          }).join("")}
+        </div>
+      </div>
+    `).join("")}
+    <div class="modal-actions">
+      <button class="btn-primary" id="addCheckedBtn">Add checked items</button>
+      <button class="btn-ghost" id="skipDefaultsBtn">Skip — mark reviewed</button>
+      <button class="btn-ghost" id="modalCancelBtn">Cancel</button>
+    </div>
+  `;
+  overlay.classList.remove("hidden");
+  document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+  document.getElementById("modalCancelBtn").addEventListener("click", closeModal);
+  document.getElementById("skipDefaultsBtn").addEventListener("click", ()=>{
+    setStoredDefaultVersion(currentProfile, DEFAULT_LISTS_VERSION);
+    defaultsOutdated = false;
+    renderDefaultsBanner();
+    closeModal();
+  });
+  document.getElementById("addCheckedBtn").addEventListener("click", async ()=>{
+    const checked = Array.from(document.querySelectorAll("[data-diffkey]:checked"));
+    checked.forEach(cb=>{
+      const key = cb.dataset.diffkey;
+      const idx = parseInt(cb.dataset.diffidx, 10);
+      const item = JSON.parse(JSON.stringify(diff[key][idx])); // clone — never share references with DEFAULT_LISTS
+      LISTS[key].push(item);
+    });
+    await saveLists();
+    setStoredDefaultVersion(currentProfile, DEFAULT_LISTS_VERSION);
+    defaultsOutdated = false;
+    renderDefaultsBanner();
+    closeModal();
+    if(currentTab === "manage") renderPanel();
+  });
 }
 
 async function saveLists(){
@@ -651,7 +1013,9 @@ async function switchProfile(name){
   loadCurrentProfileLists();
   try{ localStorage.setItem(LAST_PROFILE_KEY, currentProfile); }catch(e){}
   currentDraw = {};
+  printSet = [];
   renderProfileBar();
+  updatePrintSetButton();
   renderPanel();
 }
 
@@ -668,6 +1032,7 @@ async function createProfile(){
   idx.push(clean);
   setProfileIndex(idx);
   try{ localStorage.setItem(dataKey(clean), JSON.stringify(DEFAULT_LISTS)); }catch(e){}
+  setStoredDefaultVersion(clean, DEFAULT_LISTS_VERSION);
   await switchProfile(clean);
 }
 
@@ -682,10 +1047,13 @@ async function renameProfile(){
     return;
   }
   const data = localStorage.getItem(dataKey(currentProfile));
+  const version = getStoredDefaultVersion(currentProfile);
   try{
     localStorage.setItem(dataKey(clean), data);
     localStorage.removeItem(dataKey(currentProfile));
   }catch(e){}
+  setStoredDefaultVersion(clean, version);
+  try{ localStorage.removeItem(defaultVersionKey(currentProfile)); }catch(e){}
   const newIdx = idx.map(n => n===currentProfile ? clean : n);
   setProfileIndex(newIdx);
   await switchProfile(clean);
@@ -699,22 +1067,50 @@ async function deleteProfile(){
   }
   if(!confirm(`Delete the profile "${currentProfile}" and its lists? This can't be undone.`)) return;
   try{ localStorage.removeItem(dataKey(currentProfile)); }catch(e){}
+  try{ localStorage.removeItem(defaultVersionKey(currentProfile)); }catch(e){}
   const newIdx = idx.filter(n => n !== currentProfile);
   setProfileIndex(newIdx);
   await switchProfile(newIdx[0]);
 }
 
-function exportProfile(){
-  const payload = {profileName: currentProfile, lists: LISTS};
-  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+async function saveBlobToFile(blob, suggestedName){
+  if(window.showSaveFilePicker){
+    try{
+      const handle = await window.showSaveFilePicker({
+        suggestedName,
+        types:[{
+          description: blob.type === "application/json" ? "JSON file" : "HTML file",
+          accept:{[blob.type || "application/octet-stream"]:[blob.type === "application/json" ? ".json" : ".html"]}
+        }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return true;
+    }catch(err){
+      if(err && err.name === "AbortError") return false;
+      // Fall through to the normal browser download if the picker is unavailable
+      // or cannot be used in this browser.
+    }
+  }
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${currentProfile.replace(/[^a-z0-9\-_]+/gi,"_")}-speaking-toolkit.json`;
+  a.download = suggestedName;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  return true;
+}
+
+async function exportProfile(){
+  const payload = {profileName: currentProfile, lists: LISTS};
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
+  await saveBlobToFile(
+    blob,
+    `${currentProfile.replace(/[^a-z0-9\-_]+/gi,"_")}-speaking-toolkit.json`
+  );
 }
 
 function importProfileFile(file){
@@ -769,7 +1165,7 @@ function drawStory(){
     theme: LISTS.themes.length ? pickOne(LISTS.themes) : null,
     pv: weightedSample(LISTS.phrasalVerbs, 3),
     idioms: weightedSample(LISTS.idioms, 2),
-    vocab: sample(LISTS.vocabulary, 3)
+    vocab: weightedSample(LISTS.vocabulary, 3)
   };
 }
 function storyHTML(){
@@ -784,7 +1180,10 @@ function storyHTML(){
       ${tagGroup("Vocabulary", d.vocab, "vocab", "vocabulary")}
     </div>
     <p class="hint">Improvise a story on the theme, working in every expression. Tap any word to see its definition and an example. Follow up with questions, then tell the whole story a second time — the second telling is where the fluency shows up.</p>
-    <button class="draw-btn" id="reroll">Draw new cubes</button>
+    <div class="exercise-actions">
+      <button class="draw-btn" id="reroll">Draw new cubes</button>
+      <button class="draw-btn" id="addToPrintSet" style="background:none;color:var(--navy);border:1.5px solid var(--navy);">Add to print set</button>
+    </div>
   `;
 }
 
@@ -793,7 +1192,7 @@ function drawDebate(){
     topic: LISTS.debateTopics.length ? pickOne(LISTS.debateTopics) : null,
     pv: weightedSample(LISTS.phrasalVerbs, 4),
     idioms: weightedSample(LISTS.idioms, 3),
-    vocab: sample(LISTS.vocabulary, 5)
+    vocab: weightedSample(LISTS.vocabulary, 5)
   };
 }
 function debateHTML(){
@@ -808,7 +1207,10 @@ function debateHTML(){
       ${tagGroup("Must use — vocabulary", d.vocab, "vocab", "vocabulary")}
     </div>
     <p class="hint">Argue one side (or play devil's advocate) and work every required expression in naturally. Tap a word to check its meaning before you start.</p>
-    <button class="draw-btn" id="reroll">Draw new card</button>
+    <div class="exercise-actions">
+      <button class="draw-btn" id="reroll">Draw new card</button>
+      <button class="draw-btn" id="addToPrintSet" style="background:none;color:var(--navy);border:1.5px solid var(--navy);">Add to print set</button>
+    </div>
   `;
 }
 
@@ -832,7 +1234,10 @@ function tabooHTML(){
       </ul>
     </div>
     <p class="hint">Define or explain the target word out loud without using any of the forbidden words.</p>
+    <div class="exercise-actions">
     <button class="draw-btn" id="reroll">Draw new card</button>
+    <button class="draw-btn" id="addToPrintSet" style="background:none;color:var(--navy);border:1.5px solid var(--navy);">Add to print set</button>
+  </div>
   `;
 }
 
@@ -861,7 +1266,10 @@ function ladderHTML(){
       </ol>
     </div>
     <p class="hint">Start with the plain sentence and rebuild it out loud rung by rung. Tap any bold word to check its meaning.</p>
-    <button class="draw-btn" id="reroll">Draw new sentence</button>
+    <div class="exercise-actions">
+      <button class="draw-btn" id="reroll">Draw new sentence</button>
+      <button class="draw-btn" id="addToPrintSet" style="background:none;color:var(--navy);border:1.5px solid var(--navy);">Add to print set</button>
+    </div>
   `;
 }
 
@@ -959,7 +1367,7 @@ const SIMPLE_LISTS = [
 const WORD_LISTS = [
   {key:"phrasalVerbs", label:"Phrasal verbs", ratable:true},
   {key:"idioms", label:"Idioms", ratable:true},
-  {key:"vocabulary", label:"Vocabulary", ratable:false}
+  {key:"vocabulary", label:"Vocabulary", ratable:true}
 ];
 
 function ratingBadge(rating){
@@ -1049,9 +1457,23 @@ function openViewModal(listKey, text){
         <div class="meaning-ex">"${m.example}"</div>
       </div>
     `).join("")}
+    <div class="group-label" style="margin-top:18px;">Student rating</div>
+    <div class="modal-actions">
+      <button class="${item.rating===1 ? "btn-danger" : "btn-ghost"}" data-view-rate="1">1 — ${RATING_LABELS[1]}</button>
+      <button class="${item.rating===2 ? "btn-primary" : "btn-ghost"}" data-view-rate="2">2 — ${RATING_LABELS[2]}</button>
+      <button class="${item.rating===3 ? "btn-primary" : "btn-ghost"}" data-view-rate="3">3 — ${RATING_LABELS[3]}</button>
+    </div>
   `;
   overlay.classList.remove("hidden");
   document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+  document.querySelectorAll("[data-view-rate]").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      item.rating = parseInt(btn.dataset.viewRate,10);
+      await saveLists();
+      closeModal();
+      renderPanel();
+    });
+  });
 }
 
 // ---------- MODAL: edit mode ----------
@@ -1159,6 +1581,206 @@ document.getElementById("modalOverlay").addEventListener("click", e=>{
   if(e.target.id === "modalOverlay") closeModal();
 });
 
+// ---------- PRINT SET ----------
+function updatePrintSetButton(){
+  const btn = document.getElementById("printSetBtn");
+  if(btn) btn.textContent = `Print set (${printSet.length})`;
+}
+
+function snapshotCurrentExercise(){
+  const d = currentDraw[currentTab];
+  if(!d || !["story","debate","taboo","ladder"].includes(currentTab)) return null;
+  return JSON.parse(JSON.stringify({type:currentTab, data:d}));
+}
+
+function exerciseTitle(ex){
+  if(ex.type==="story") return ex.data.theme || "Story Cube";
+  if(ex.type==="debate") return ex.data.topic || "Debate Card";
+  if(ex.type==="taboo") return ex.data.target || "Taboo+";
+  if(ex.type==="ladder") return ex.data.starter || "Laddering";
+  return "Exercise";
+}
+
+function exerciseTypeLabel(type){
+  return ({story:"Story Cubes", debate:"Debate Card", taboo:"Taboo+", ladder:"Laddering"})[type] || "Exercise";
+}
+
+function addCurrentExerciseToPrintSet(){
+  const ex = snapshotCurrentExercise();
+  if(!ex) return;
+  printSet.push(ex);
+  updatePrintSetButton();
+  setStatus(`${exerciseTypeLabel(ex.type)} added to print set — ${printSet.length} exercise${printSet.length===1?"":"s"}.`);
+}
+
+function printableDefinitionHTML(item){
+  if(!item || !Array.isArray(item.meanings) || !item.meanings.length) return "";
+  return `<div class="print-definition">
+    ${item.meanings.map((m,i)=>`<div class="print-meaning">
+      ${item.meanings.length>1 ? `<div class="print-meaning-num">Meaning ${i+1}</div>` : ""}
+      <div class="print-def">${escHTML(m.definition || "")}</div>
+      ${m.example ? `<div class="print-example">“${escHTML(m.example)}”</div>` : ""}
+    </div>`).join("")}
+  </div>`;
+}
+
+function printableItemHTML(item){
+  if(!item) return "";
+  return `<div class="print-item">
+    <div class="print-tag">${escHTML(item.text || "")}</div>
+    ${printableDefinitionHTML(item)}
+  </div>`;
+}
+
+function printableItemsHTML(label, items){
+  return `<div class="print-group"><div class="print-label">${label}</div>
+    <div class="print-items">${(items||[]).map(printableItemHTML).join("")}</div>
+  </div>`;
+}
+
+function findListItemByText(text){
+  if(!text) return null;
+  for(const key of ["phrasalVerbs","idioms","vocabulary"]){
+    const found = LISTS[key]?.find(it=>it.text===text);
+    if(found) return found;
+  }
+  return null;
+}
+
+function printableExerciseHTML(ex,typeChange){
+  const d = ex.data;
+  if(ex.type==="story"){
+    return `<article class="print-card${typeChange ? " type-change" : ""}">
+      <div class="print-eyebrow">Story Cubes — tell it, then tell it again</div>
+      <h1>${escHTML(d.theme || "")}</h1>
+      ${printableItemsHTML("Phrasal verbs",d.pv)}
+      ${printableItemsHTML("Idioms",d.idioms)}
+      ${printableItemsHTML("Vocabulary",d.vocab)}
+      <p class="print-hint">Improvise a story on the theme, working in every expression.</p>
+    </article>`;
+  }
+  if(ex.type==="debate"){
+    return `<article class="print-card${typeChange ? " type-change" : ""}">
+      <div class="print-eyebrow">Debate Cards</div>
+      <h1>${escHTML(d.topic || "")}</h1>
+      ${printableItemsHTML("Must use — phrasal verbs",d.pv)}
+      ${printableItemsHTML("Must use — idioms",d.idioms)}
+      ${printableItemsHTML("Must use — vocabulary",d.vocab)}
+      <p class="print-hint">Argue one side (or play devil's advocate) and work every required expression in naturally.</p>
+    </article>`;
+  }
+  if(ex.type==="taboo"){
+    const targetItem = findListItemByText(d.target);
+    return `<article class="print-card${typeChange ? " type-change" : ""}">
+      <div class="print-eyebrow">Taboo+ — explain it without these</div>
+      <h1>${escHTML(d.target || "")}</h1>
+      ${targetItem ? printableDefinitionHTML(targetItem) : ""}
+      <div class="print-label">Forbidden words</div>
+      <ul class="print-forbidden">${(d.forbidden||[]).map(x=>`<li>${escHTML(x)}</li>`).join("")}</ul>
+      <p class="print-hint">Define or explain the target word out loud without using any of the forbidden words.</p>
+    </article>`;
+  }
+  return `<article class="print-card${typeChange ? " type-change" : ""}">
+    <div class="print-eyebrow">Laddering — build the sentence up</div>
+    <h1>“${escHTML(d.starter || "")}"</h1>
+    <div class="print-label">Work these in, one rung at a time</div>
+    <ol class="print-ladder">
+      <li>Add a detail (where, when, who).</li>
+      <li>Add a reaction or feeling.</li>
+      <li>Insert the phrasal verb: <strong>${escHTML(d.pv?.text || "—")}</strong>${printableDefinitionHTML(d.pv)}</li>
+      <li>Insert the idiom: <strong>${escHTML(d.idiom?.text || "—")}</strong>${printableDefinitionHTML(d.idiom)}</li>
+      <li>Insert the vocabulary word: <strong>${escHTML(d.vocab?.text || "—")}</strong>${printableDefinitionHTML(d.vocab)}</li>
+    </ol>
+  </article>`;
+}
+
+function printSetHTML(){
+  return `<!doctype html><html><head><meta charset="utf-8">
+    <title>${escHTML(currentProfile)} — speaking exercises</title>
+    <style>
+      @page{size:auto;margin:0.45in;}
+      *{box-sizing:border-box}
+      body{margin:0;font-family:Arial,sans-serif;color:#000;background:white}
+      .print-grid{display:grid;grid-template-columns:1fr;gap:.14in}
+      .print-card{border:none;padding:0;margin:0 0 .12in;break-inside:avoid;page-break-inside:avoid}
+      .print-item{margin:5px 0 8px;break-inside:avoid}
+      .print-items{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px;align-items:start}
+      .print-definition{margin:3px 0 0 0}
+      .print-meaning{margin:3px 0 6px}
+      .print-meaning-num{font:700 9px/1.2 monospace;text-transform:uppercase;letter-spacing:.05em;color:#000;margin-bottom:2px}
+      .print-def{font-size:11.5px;line-height:1.35;color:#000}
+      .print-example{font-size:11.5px;line-height:1.35;font-style:italic;margin-top:2px;color:#000}
+      .print-ladder .print-definition{margin-left:0;margin-top:4px}
+      .print-eyebrow{font:700 13px/1.25 monospace;text-transform:uppercase;letter-spacing:.08em;color:#168C8C;margin-bottom:6px}
+      h1{font-family:Georgia,serif;font-size:21px;line-height:1.2;margin:0 0 9px;color:#000}
+      .print-group{margin:7px 0}.print-label{font:700 12px/1.25 monospace;text-transform:uppercase;letter-spacing:.06em;color:#168C8C;margin-bottom:4px}
+      .print-tags{display:flex;flex-wrap:wrap;gap:5px}.print-tag{display:inline-block;font-size:12px;font-weight:700;border:1px solid #000;border-radius:10px;padding:3px 6px;color:#000}
+      .print-hint{font-size:11px;line-height:1.35;color:#000;margin-top:8px}
+      .print-forbidden{margin:5px 0 9px;padding-left:18px}.print-forbidden li{font:12.5px monospace;text-decoration:line-through;margin:3px 0;color:#000}
+      .print-ladder{font-size:11.5px;line-height:1.35;margin:5px 0;padding-left:20px;color:#000}.print-ladder li{margin:4px 0}
+      .print-ladder strong{font-weight:700}
+      @media print{.print-grid{gap:.14in}.print-card{break-inside:avoid;page-break-inside:avoid}.print-card.type-change{break-before:page;page-break-before:always}}
+    </style></head><body>
+    <div class="print-grid">${printSet.map((ex,i)=>printableExerciseHTML(ex, i>0 && ex.type!==printSet[i-1].type)).join("")}</div>
+    </body></html>`;
+}
+
+function openPrintSetModal(){
+  const overlay = document.getElementById("modalOverlay");
+  const card = document.getElementById("modalCard");
+  card.innerHTML = `
+    <button class="modal-close" id="modalCloseBtn">&times;</button>
+    <div class="eyebrow">Print Set</div>
+    <h2>${printSet.length ? `${printSet.length} exercise${printSet.length===1?"":"s"} ready` : "Your print set is empty"}</h2>
+    ${printSet.length ? `<p class="hint">Add exercises as you draw them. The final printout puts two exercises on each sheet when space allows. In the printer dialog, choose <strong>Print on both sides</strong> if you want duplex printing.</p>` : `<p class="hint">On Story Cubes, Debate Cards, Taboo+, or Laddering, click <strong>Add to print set</strong> after you get an exercise you want to take to the lesson.</p>`}
+    <div class="print-set-list">
+      ${printSet.map((ex,i)=>`
+        <div class="print-set-item">
+          <span class="set-num">${i+1}</span>
+          <span class="set-title">${escHTML(exerciseTitle(ex))}</span>
+          <span class="set-type">${exerciseTypeLabel(ex.type)}</span>
+          <button type="button" data-remove-print="${i}" title="Remove">×</button>
+        </div>`).join("") || `<p class="empty-hint">No exercises added yet.</p>`}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-primary" id="printSetNow" ${printSet.length?"":"disabled"}>Print set</button>
+      <button class="btn-ghost" id="savePrintSet" ${printSet.length?"":"disabled"}>Save set…</button>
+      <button class="btn-danger" id="clearPrintSet" ${printSet.length?"":"disabled"}>Clear set</button>
+    </div>`;
+  overlay.classList.remove("hidden");
+  document.getElementById("modalCloseBtn").addEventListener("click", closeModal);
+  document.querySelectorAll("[data-remove-print]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      printSet.splice(parseInt(btn.dataset.removePrint,10),1);
+      updatePrintSetButton();
+      openPrintSetModal();
+    });
+  });
+  document.getElementById("clearPrintSet").addEventListener("click", ()=>{
+    printSet = [];
+    updatePrintSetButton();
+    openPrintSetModal();
+  });
+  document.getElementById("savePrintSet").addEventListener("click", async ()=>{
+    const blob = new Blob([JSON.stringify({profileName:currentProfile, exercises:printSet},null,2)], {type:"application/json"});
+    await saveBlobToFile(blob, `${currentProfile.replace(/[^a-z0-9\\-_]+/gi,"_")}-exercise-set.json`);
+    setStatus("exercise set saved");
+  });
+  document.getElementById("printSetNow").addEventListener("click", ()=>{
+    const win = window.open("", "_blank");
+    if(!win){ alert("Please allow pop-ups for this file so the print window can open."); return; }
+    win.document.open();
+    win.document.write(printSetHTML());
+    win.document.close();
+    win.focus();
+    setTimeout(()=>win.print(), 350);
+  });
+}
+
+function escHTML(s){
+  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
 function attachPanelHandlers(){
   const reroll = document.getElementById("reroll");
   if(reroll){
@@ -1176,6 +1798,11 @@ function attachPanelHandlers(){
       openViewModal(el.dataset.list, el.dataset.text);
     });
   });
+
+  const addToPrint = document.getElementById("addToPrintSet");
+  if(addToPrint){
+    addToPrint.addEventListener("click", addCurrentExerciseToPrintSet);
+  }
 
   if(currentTab === "manage"){
     document.querySelectorAll(".del-simple").forEach(btn=>{
@@ -1324,6 +1951,7 @@ document.getElementById("newProfileBtn").addEventListener("click", createProfile
 document.getElementById("renameProfileBtn").addEventListener("click", renameProfile);
 document.getElementById("deleteProfileBtn").addEventListener("click", deleteProfile);
 document.getElementById("exportProfileBtn").addEventListener("click", exportProfile);
+document.getElementById("printSetBtn").addEventListener("click", openPrintSetModal);
 document.getElementById("importProfileBtn").addEventListener("click", ()=>{
   document.getElementById("importFileInput").click();
 });
